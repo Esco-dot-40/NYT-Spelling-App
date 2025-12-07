@@ -3,14 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
@@ -42,6 +41,7 @@ export default function History() {
   const { user, loading: authLoading } = useAuth();
   const [history, setHistory] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -76,6 +76,18 @@ export default function History() {
     fetchHistory();
   }, [user, authLoading]);
 
+  const toggleRow = (index: number) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-game-bg flex items-center justify-center">
@@ -106,46 +118,65 @@ export default function History() {
             </p>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Rank</TableHead>
-                  <TableHead>Words Found</TableHead>
-                  <TableHead>Pangrams</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {history.map((game, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {format(new Date(game.game_date), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-bold text-primary">{game.score}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10">
-                        {game.rank || getRank(game.score)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{game.words_found?.length || 0}</TableCell>
-                    <TableCell>
-                      {game.pangrams_found?.length > 0 ? (
-                        <Badge className="bg-gradient-to-r from-primary to-accent">
-                          {game.pangrams_found.length} 🎉
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <div className="space-y-4">
+            {history.map((game, index) => (
+              <Collapsible key={index} open={expandedRows.has(index)} onOpenChange={() => toggleRow(index)}>
+                <Card>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full p-4 h-auto hover:bg-muted/50">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-4">
+                          <div className="text-left">
+                            <div className="font-semibold">
+                              {format(new Date(game.game_date), "MMMM d, yyyy")}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {game.words_found?.length || 0} words • {game.score} points
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10">
+                            {game.rank || getRank(game.score)}
+                          </Badge>
+                          {game.pangrams_found?.length > 0 && (
+                            <Badge className="bg-gradient-to-r from-primary to-accent">
+                              {game.pangrams_found.length} Pangram{game.pangrams_found.length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                          {expandedRows.has(index) ? (
+                            <ChevronUp className="h-5 w-5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5" />
+                          )}
+                        </div>
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-4 pb-4 pt-2 border-t">
+                      <h3 className="font-semibold mb-3">Words Found ({game.words_found?.length || 0})</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {game.words_found?.map((word, wordIndex) => {
+                          const isPangram = game.pangrams_found?.includes(word);
+                          return (
+                            <Badge
+                              key={wordIndex}
+                              variant={isPangram ? "default" : "outline"}
+                              className={isPangram ? "bg-gradient-to-r from-primary to-accent" : ""}
+                            >
+                              {word}
+                              {isPangram && " 🎉"}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            ))}
+          </div>
         )}
       </div>
     </div>
