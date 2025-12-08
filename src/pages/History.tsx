@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/firebase";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 interface GameHistory {
   game_date: string;
@@ -54,15 +54,23 @@ export default function History() {
 
       try {
         const gamesRef = collection(db, "users", user.uid, "games");
-        const q = query(gamesRef, orderBy("timestamp", "desc"), limit(50));
-        const querySnapshot = await getDocs(q);
+        // Don't use orderBy to avoid index requirement - sort in JS instead
+        const querySnapshot = await getDocs(gamesRef);
 
         const games: GameHistory[] = [];
         querySnapshot.forEach((doc) => {
           games.push(doc.data() as GameHistory);
         });
 
-        setHistory(games);
+        // Sort by timestamp (newest first), fallback to game_date if no timestamp
+        games.sort((a, b) => {
+          const aTime = a.timestamp || a.game_date || '';
+          const bTime = b.timestamp || b.game_date || '';
+          return bTime.localeCompare(aTime);
+        });
+
+        // Limit to 50 most recent
+        setHistory(games.slice(0, 50));
       } catch (error: any) {
         console.error("Error fetching history:", error);
         toast.error("Failed to load history", {
