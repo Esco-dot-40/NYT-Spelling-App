@@ -46,7 +46,10 @@ export default function History() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (authLoading) return;
+      // Wait for auth to finish loading
+      if (authLoading) {
+        return;
+      }
 
       if (!user) {
         setLoading(false);
