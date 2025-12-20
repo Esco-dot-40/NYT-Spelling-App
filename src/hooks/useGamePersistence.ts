@@ -8,15 +8,14 @@ export const useGamePersistence = () => {
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const loadProgress = useCallback(async () => {
+  const loadProgress = useCallback(async (puzzleId: string) => {
     if (!user) {
       setIsLoaded(true);
       return null;
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const gameRef = doc(db, "users", user.uid, "games", today);
+      const gameRef = doc(db, "users", user.uid, "games", puzzleId);
       const gameSnap = await getDoc(gameRef);
 
       if (gameSnap.exists()) {
@@ -34,7 +33,7 @@ export const useGamePersistence = () => {
     }
   }, [user]);
 
-  const saveProgress = useCallback(async (score: number, wordsFound: string[], pangramsFound: string[], maxScore: number) => {
+  const saveProgress = useCallback(async (puzzleId: string, score: number, wordsFound: string[], pangramsFound: string[], maxScore: number) => {
     if (!user) return;
 
     try {
@@ -96,14 +95,14 @@ export const useGamePersistence = () => {
         score,
         words_found: wordsFound,
         pangrams_found: pangramsFound,
-        game_date: today,
+        game_date: today, // Keep tracking the real date of play
+        puzzle_id: puzzleId,
         rank: currentRank,
         timestamp: new Date().toISOString()
       };
 
-      // Use timestamp for unique game ID instead of just date
-      const gameId = new Date().getTime().toString();
-      await setDoc(doc(db, "users", user.uid, "games", gameId), gameData);
+      // Save using the specific puzzleId
+      await setDoc(doc(db, "users", user.uid, "games", puzzleId), gameData);
 
       await setDoc(statsRef, {
         current_streak: currentStreak,

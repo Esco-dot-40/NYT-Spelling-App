@@ -616,11 +616,16 @@ export const ThreeBackground = () => {
       composer.setSize(w, h);
     };
 
-    window.addEventListener('resize', handleResize);
+    const intervalId = setInterval(() => {
+      if (sceneRef.current && (sceneRef.current as any).triggerEffect) {
+        (sceneRef.current as any).triggerEffect();
+      }
+    }, 12000); // Cycle every 12 seconds
 
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationId);
+      clearInterval(intervalId);
       renderer.dispose();
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);
@@ -628,29 +633,13 @@ export const ThreeBackground = () => {
     };
   }, []);
 
-  const handleTriggerEffect = () => {
-    if (sceneRef.current && (sceneRef.current as any).triggerEffect) {
-      (sceneRef.current as any).triggerEffect();
-    }
-  };
-
   return (
     <>
-      <div 
-        ref={containerRef} 
+      <div
+        ref={containerRef}
         className="fixed inset-0 z-0 pointer-events-auto"
         style={{ background: 'linear-gradient(to bottom, hsl(240 25% 4%), hsl(240 25% 8%))' }}
       />
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 text-center">
-        <Button
-          onClick={handleTriggerEffect}
-          variant="outline"
-          className="px-6 py-3 bg-background/10 border-border/30 text-foreground backdrop-blur-xl hover:bg-background/20 hover:border-border/50 transition-all"
-        >
-          Trigger Effect
-        </Button>
-        <div className="mt-2 text-foreground/80 text-sm">{effectName}</div>
-      </div>
     </>
   );
 };

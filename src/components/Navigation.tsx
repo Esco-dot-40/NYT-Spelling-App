@@ -1,13 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Moon, Sun, BarChart3, History, Home, LogIn, LogOut, User } from "lucide-react";
+import { Moon, Sun, BarChart3, History, Home, LogIn, LogOut, User, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSound } from "@/contexts/SoundContext";
 
 export const Navigation = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, login, logout, loading } = useAuth();
+  const { volume, setVolume } = useSound();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -70,6 +78,30 @@ export const Navigation = () => {
                 <History className="h-5 w-5" />
               </Link>
             </Button>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  {volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium leading-none">Volume</h4>
+                    <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
+                      {Math.round(volume * 100)}%
+                    </span>
+                  </div>
+                  <Slider
+                    defaultValue={[volume]}
+                    max={1}
+                    step={0.01}
+                    onValueChange={(value) => setVolume(value[0])}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Button
               variant="ghost"

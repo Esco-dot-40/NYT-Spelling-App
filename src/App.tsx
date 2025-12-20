@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DiscordProvider, useDiscord } from "@/contexts/DiscordContext";
+import { SoundProvider } from "@/contexts/SoundContext";
 import { Navigation } from "@/components/Navigation";
 import { VelarixButton } from "@/components/VelarixButton";
 import Index from "./pages/Index";
@@ -44,30 +45,32 @@ const App = () => (
     <ThemeProvider>
       <DiscordProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <DiscordLoadingWrapper>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/statistics" element={
-                  <>
-                    <Navigation />
-                    <Statistics />
-                    <VelarixButton />
-                  </>
-                } />
-                <Route path="/history" element={
-                  <>
-                    <Navigation />
-                    <History />
-                    <VelarixButton />
-                  </>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </DiscordLoadingWrapper>
+          <SoundProvider>
+            <Toaster />
+            <Sonner />
+            <DiscordLoadingWrapper>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/statistics" element={
+                    <>
+                      <Navigation />
+                      <Statistics />
+                      <VelarixButton />
+                    </>
+                  } />
+                  <Route path="/history" element={
+                    <>
+                      <Navigation />
+                      <History />
+                      <VelarixButton />
+                    </>
+                  } />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </DiscordLoadingWrapper>
+          </SoundProvider>
         </AuthProvider>
       </DiscordProvider>
     </ThemeProvider>

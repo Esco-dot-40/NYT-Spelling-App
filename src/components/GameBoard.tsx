@@ -20,8 +20,10 @@ import { shuffle } from "@/lib/gameUtils";
 import { toast } from "sonner";
 import { getTodaysPuzzle } from "@/lib/puzzleGenerator";
 import { useGamePersistence } from "@/hooks/useGamePersistence";
+import { useSound } from "@/contexts/SoundContext";
 
 export const GameBoard = () => {
+  const { playClick, playSuccess, playError } = useSound();
   const [forceDate, setForceDate] = useState<string | null>(null);
   const [puzzle, setPuzzle] = useState(() => getTodaysPuzzle(forceDate));
   const [puzzleId, setPuzzleId] = useState<string>(() => forceDate || new Date().toISOString().split('T')[0]);
@@ -78,21 +80,25 @@ export const GameBoard = () => {
     setScore(0);
     setRotation(0);
 
+    playClick();
     toast.success("New puzzle loaded! 🎲");
   };
 
   // Letter click
   const handleLetterClick = (letter: string) => {
+    playClick();
     setCurrentWord((prev) => prev + letter);
   };
 
   // Delete last letter
   const handleDelete = () => {
+    playClick();
     setCurrentWord((prev) => prev.slice(0, -1));
   };
 
   // Shuffle outer letters
   const handleShuffle = () => {
+    playClick();
     setOuterLetters(shuffle([...outerLetters]));
     setRotation((prev) => prev + 360);
     toast.info("Letters shuffled!");
@@ -107,6 +113,7 @@ export const GameBoard = () => {
 
   // Trigger shake animation
   const triggerShake = () => {
+    playError();
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
   };
@@ -150,6 +157,8 @@ export const GameBoard = () => {
     setFoundWords([...foundWords, word]);
     setScore(score + wordScore);
 
+    playSuccess();
+
     if (isPangram) {
       toast.success(`🎉 Pangram! +${wordScore} points!`, { duration: 3000 });
     } else {
@@ -177,12 +186,13 @@ export const GameBoard = () => {
       // Only letters A-Z
       if (/^[a-zA-Z]$/.test(key)) {
         setCurrentWord((prev) => prev + key.toUpperCase());
+        playClick();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentWord]);
+  }, [currentWord, playClick]); // Added playClick to dependencies
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col items-center justify-start p-4 md:p-8 relative z-10">
