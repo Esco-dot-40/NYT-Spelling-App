@@ -13,6 +13,8 @@ import Statistics from "./pages/Statistics";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import EffectsOverlay from "./components/EffectsOverlay";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -41,42 +43,58 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <DiscordProvider>
-        <AuthProvider>
-          <SoundProvider>
-            <EffectsOverlay />
-            <Toaster />
-            <Sonner />
-            <DiscordLoadingWrapper>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/statistics" element={
-                    <>
-                      <Navigation />
-                      <Statistics />
-                      <VelarixButton />
-                    </>
-                  } />
-                  <Route path="/history" element={
-                    <>
-                      <Navigation />
-                      <History />
-                      <VelarixButton />
-                    </>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </DiscordLoadingWrapper>
-          </SoundProvider>
-        </AuthProvider>
-      </DiscordProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 3000); // Show for 3 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <>
+      {showLoading && <LoadingScreen />}
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <DiscordProvider>
+            <AuthProvider>
+              <SoundProvider>
+                <EffectsOverlay />
+                <Toaster />
+                <Sonner />
+                <DiscordLoadingWrapper>
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/statistics" element={
+                        <>
+                          <Navigation />
+                          <Statistics />
+                          <VelarixButton />
+                        </>
+                      } />
+                      <Route path="/history" element={
+                        <>
+                          <Navigation />
+                          <History />
+                          <VelarixButton />
+                        </>
+                      } />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </DiscordLoadingWrapper>
+              </SoundProvider>
+            </AuthProvider>
+          </DiscordProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </>
+  );
+};
 
 export default App;
+
