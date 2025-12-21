@@ -10,9 +10,8 @@ const EffectsOverlay = () => {
     const cache = useRef<gsap.core.Timeline[]>([]);
     const [showMoments, setShowMoments] = useState(false);
 
-    // Snow logic
+    // Snow logic - always active
     useEffect(() => {
-        if (activeLayer !== 'snow-globe') return;
         const emitter = emitterRef.current;
         if (!emitter) return;
 
@@ -186,8 +185,8 @@ const EffectsOverlay = () => {
 
     return (
         <>
-            {/* Layer 1: Snow Globe - Interactive overlay on the right */}
-            <div className={`snow-globe-overlay transition-opacity duration-1000 ${activeLayer === 'snow-globe' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} style={{ zIndex: 30 }}>
+            {/* Layer 1: Snow Globe - Interactive overlay on the right, always visible */}
+            <div className="snow-globe-overlay opacity-100" style={{ zIndex: 30 }}>
                 <div className="snow-globe" ref={globeRef}>
                     <div className="dome">
                         <div id="emitter" ref={emitterRef}></div>
