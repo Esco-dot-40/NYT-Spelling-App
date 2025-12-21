@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Moon, Sun, BarChart3, History, Home, LogIn, LogOut, User, Volume2, VolumeX, Lightbulb, Music2 } from "lucide-react";
+import { Moon, Sun, BarChart3, History, Home, LogIn, LogOut, User, Volume2, VolumeX, Lightbulb, Music2, CornerDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -39,9 +39,15 @@ export const Navigation = () => {
     <nav className="w-full bg-card/80 backdrop-blur-sm border-b border-border relative z-20">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              <h1 className="text-3xl md:text-4xl font-bold">Velarix</h1>
+          <Link to="/" className="flex flex-col items-start group select-none">
+            <div className="bg-gradient-to-br from-primary via-primary to-accent bg-clip-text text-transparent leading-none">
+              <h1 className="text-3xl md:text-4xl font-[900] tracking-tighter italic">AlphaBee</h1>
+            </div>
+            <div className="flex items-center gap-1.5 ml-4 -mt-1 opacity-60 group-hover:opacity-100 transition-all duration-300">
+              <CornerDownLeft className="h-3.5 w-3.5 text-primary/70" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                By Velarix
+              </span>
             </div>
           </Link>
 
