@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
+import EffectsOverlay from "./components/EffectsOverlay";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
       <DiscordProvider>
         <AuthProvider>
           <SoundProvider>
+            <EffectsOverlay />
             <Toaster />
             <Sonner />
             <DiscordLoadingWrapper>

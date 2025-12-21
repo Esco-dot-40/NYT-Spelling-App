@@ -11,6 +11,7 @@ export const GameControls = ({ onShuffle, onDelete, onSubmit }: GameControlsProp
   return (
     <div className="flex gap-3 justify-center w-full max-w-md">
       <Button
+        id="shuffle-button"
         variant="outline"
         size="lg"
         onClick={onShuffle}
@@ -20,6 +21,7 @@ export const GameControls = ({ onShuffle, onDelete, onSubmit }: GameControlsProp
         Shuffle
       </Button>
       <Button
+        id="delete-button"
         variant="outline"
         size="lg"
         onClick={onDelete}
@@ -29,6 +31,7 @@ export const GameControls = ({ onShuffle, onDelete, onSubmit }: GameControlsProp
         Delete
       </Button>
       <Button
+        id="submit-button"
         size="lg"
         onClick={onSubmit}
         className="flex-1 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"

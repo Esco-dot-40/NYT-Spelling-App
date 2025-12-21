@@ -8,89 +8,55 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 15% 97%;
-    --foreground: 240 25% 12%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 25% 12%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 25% 12%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 48 91% 55%;
+    /* Spelling Bee Yellow */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 200 95% 90%;
-    --secondary-foreground: 240 25% 12%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 10% 95%;
-    --muted-foreground: 240 8% 46%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 335 78% 56%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 48 91% 55%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 12% 88%;
-    --input: 240 12% 88%;
-    --ring: 262 83% 58%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 48 91% 55%;
 
     --radius: 0.75rem;
 
-    --game-bg: 240 15% 97%;
-    --game-text: 240 25% 12%;
-    --hex-bg: 240 20% 94%;
-    --hex-center: 262 83% 58%;
-    --hex-text: 240 25% 12%;
-    --hex-hover: 262 83% 65%;
+    --game-bg: 0 0% 0%;
+    --game-text: 0 0% 100%;
+    --hex-bg: 0 0% 20%;
+    --hex-center: 48 91% 55%;
+    --hex-text: 0 0% 0%;
+    --hex-hover: 48 91% 65%;
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
-    
-    --velarix-gradient: linear-gradient(135deg, hsl(262 83% 58%), hsl(335 78% 56%));
-    --velarix-glow: 0 8px 32px hsla(262, 83%, 58%, 0.15);
+
+    --velarix-gradient: linear-gradient(135deg, #F7DA21, #b59e10);
+    --velarix-glow: 0 8px 32px rgba(247, 218, 33, 0.2);
   }
 
   .dark {
-    --background: 240 25% 8%;
-    --foreground: 240 10% 96%;
-
-    --card: 240 20% 12%;
-    --card-foreground: 240 10% 96%;
-
-    --popover: 240 20% 12%;
-    --popover-foreground: 240 10% 96%;
-
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 18% 18%;
-    --secondary-foreground: 240 10% 96%;
-
-    --muted: 240 18% 18%;
-    --muted-foreground: 240 8% 60%;
-
-    --accent: 335 78% 56%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 15% 20%;
-    --input: 240 15% 20%;
-    --ring: 262 83% 58%;
-
-    --game-bg: 240 25% 8%;
-    --game-text: 240 10% 96%;
-    --hex-bg: 240 20% 16%;
-    --hex-center: 262 83% 58%;
-    --hex-text: 240 10% 96%;
-    --hex-hover: 262 83% 65%;
-    --success: 142 70% 45%;
-    --warning: 38 92% 50%;
-    
-    --velarix-gradient: linear-gradient(135deg, hsl(262 83% 58%), hsl(335 78% 56%));
-    --velarix-glow: 0 8px 32px hsla(262, 83%, 58%, 0.3);
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --border: 0 0% 20%;
   }
 }
 
@@ -100,6 +66,304 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    touch-action: none;
+    overflow-x: hidden;
+
+    background:
+      radial-gradient(circle at 50% 120%,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0) 60%),
+      radial-gradient(circle at 80% 0%,
+        rgba(0, 140, 255, 0.15) 0%,
+        rgba(0, 0, 0, 0) 50%),
+      radial-gradient(circle at 20% -10%,
+        rgba(255, 200, 255, 0.15) 0%,
+        rgba(0, 0, 0, 0) 45%),
+      linear-gradient(to bottom,
+        #000000 0%,
+        #050505 100%);
+    background-attachment: fixed;
   }
+}
+
+/* === Snow globe overlay === */
+.snow-globe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 5%;
+  opacity: 0.8;
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+
+.snow-globe {
+  display: block;
+  width: 400px;
+  container: snow-globe / inline-size;
+  position: relative;
+  pointer-events: auto;
+}
+
+.dome {
+  display: block;
+  height: 400px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background: linear-gradient(30deg, rgba(67, 152, 246, 1) 0%, rgba(152, 246, 216, 1) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.dome::before {
+  content: "";
+  display: block;
+  height: calc(100% - 16px);
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background: linear-gradient(50deg, rgba(67, 152, 246, 1) 0%, rgba(152, 246, 216, 1) 100%);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dome__glare {
+  width: 240px;
+  height: auto;
+  opacity: 0.2;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.base {
+  display: block;
+  width: 400px;
+  height: 32px;
+  background-image: linear-gradient(to right, #c2b491 0%, #c2b491 10%, #cec3a7 10%, #cec3a7 30%, #dad2bc 30%, #dad2bc 80%, #cec3a7 80%, #cec3a7 100%);
+  border-radius: 12px 12px 0 0;
+  position: relative;
+  transform: translateY(-32px);
+  z-index: 5;
+}
+
+.base::before {
+  content: "";
+  display: block;
+  width: 360px;
+  height: 20px;
+  background-image: linear-gradient(to right, #a89c7d 0%, #a89c7d 10%, #8f856a 10%, #8f856a 30%, #776e58 30%, #776e58 80%, #605846 80%, #605846 100%);
+  border-radius: 12px 12px 0 0;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.base__sign {
+  display: block;
+  width: 120px;
+  height: auto;
+  color: #605846;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.propeller {
+  height: auto;
+  filter: blur(1px);
+  position: absolute;
+}
+
+.propeller[data-yellow] {
+  width: 170px;
+  top: 17%;
+  right: -9%;
+}
+
+.propeller[data-pink] {
+  width: 94px;
+  top: 1%;
+  left: 50%;
+}
+
+.propeller[data-purple] {
+  width: 128px;
+  top: 21%;
+  left: -1%;
+}
+
+.sand {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.2;
+  background: linear-gradient(0deg, rgba(155, 168, 127, 1) 0%, rgba(253, 255, 239, 1) 100%);
+  clip-path: url(#sand);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.pineapple-house {
+  width: 148px;
+  height: auto;
+  position: absolute;
+  bottom: 10%;
+  left: 41%;
+  z-index: 1;
+}
+
+.gary {
+  width: 80px;
+  height: auto;
+  position: absolute;
+  bottom: 25%;
+  left: 15%;
+  z-index: 1;
+}
+
+.gary::before {
+  content: "";
+  width: 80px;
+  height: 16px;
+  background: #bcc5a4;
+  clip-path: ellipse(40px 8px);
+  position: absolute;
+  bottom: -4px;
+  left: -4px;
+  z-index: -1;
+}
+
+.gary__eye[data-left] {
+  width: 11px;
+  height: auto;
+  position: absolute;
+  top: 8px;
+  left: 37px;
+}
+
+.gary__eye[data-right] {
+  width: 11px;
+  height: auto;
+  position: absolute;
+  top: 8px;
+  left: 50px;
+}
+
+.particle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  clip-path: url(#snowflake);
+}
+
+#emitter {
+  width: 100%;
+  height: 120%;
+  position: absolute;
+  top: -10px;
+  left: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  display: block;
+  z-index: 2;
+}
+
+.a-few-moments-later {
+  padding: 24px 12px;
+  width: 100px;
+  background: #e93a42;
+  box-shadow: 4px 4px 0 #a80b12;
+  z-index: -1;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.action {
+  display: block;
+  margin-inline: auto;
+  width: 160px;
+  position: relative;
+  z-index: 10;
+}
+
+button#shakeButton {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+  background: #e93a42;
+  border: none;
+  box-shadow: 4px 4px 0 #a80b12;
+  color: #FFED41;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  pointer-events: auto;
+}
+
+button#shakeButton img {
+  display: block;
+  width: 100%;
+  z-index: 1;
+  position: relative;
+}
+
+.button-emitter {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.star {
+  width: 29px;
+  height: 23px;
+  background: gold;
+  clip-path: url(#propeller);
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+#canvas {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  z-index: 9999;
+  pointer-events: none;
 }
