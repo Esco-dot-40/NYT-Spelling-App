@@ -118,13 +118,12 @@ const EffectsOverlay = () => {
             if (emitter) emitter.innerHTML = '';
             cache.current = [];
         };
-    }, [activeLayer]);
+    }, []);
 
-    // Fire Particles Logic
+    // Fire Particles Logic - always active
     useEffect(() => {
-        if (activeLayer !== 'fireplace') return;
 
-        const createParticles = (containerId: string, count: number, particleClass: string = "fire-particle") => {
+        const createParticles = (containerId: string, count: number, particleClass: string = "particle") => {
             const container = document.getElementById(containerId);
             if (!container) return;
 
@@ -141,7 +140,7 @@ const EffectsOverlay = () => {
         const timer = setTimeout(() => {
             createParticles("fire-container", 50);
             createParticles("fire-container-2", 50);
-            createParticles("fire-container-3", 50, "fire-particle-2");
+            createParticles("fire-container-3", 50, "particle-2");
         }, 100);
 
         return () => {
@@ -151,7 +150,7 @@ const EffectsOverlay = () => {
                 if (el) el.innerHTML = '';
             });
         };
-    }, [activeLayer]);
+    }, []);
 
 
 
