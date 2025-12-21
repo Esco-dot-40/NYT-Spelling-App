@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import fireplaceImg from '/fireplace.jpg';
+import fireplaceImg from '../assets/fireplace.jpg';
 
 const EffectsOverlay = () => {
     const [activeLayer] = useState<'snow-globe' | 'fireplace'>('fireplace');
