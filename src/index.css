@@ -366,11 +366,12 @@ button#shakeButton img {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1;
+  z-index: 1;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 #fire-base-img {
