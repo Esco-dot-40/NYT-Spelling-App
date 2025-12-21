@@ -14,7 +14,12 @@ const EffectsOverlay = () => {
     // Snow logic - always active
     useEffect(() => {
         const emitter = emitterRef.current;
-        if (!emitter) return;
+        console.log('Snow effect initializing...', { emitter, hasEmitter: !!emitter });
+        if (!emitter) {
+            console.error('Snow emitter not found!');
+            return;
+        }
+        console.log('Snow emitter found, creating particles...');
 
         const count = 200;
         const frequency = 120;
@@ -24,7 +29,7 @@ const EffectsOverlay = () => {
 
         const createParticle = () => {
             const particle = document.createElement("div");
-            particle.className = "particle";
+            particle.className = "snow-particle";
             emitter.appendChild(particle);
 
             const startX = randMinMax(0, emitter.offsetWidth);

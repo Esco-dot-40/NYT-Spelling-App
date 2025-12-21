@@ -274,7 +274,7 @@ All colors MUST be HSL.
   left: 50px;
 }
 
-.particle {
+.snow-particle {
   position: absolute;
   top: 0;
   left: 50%;
