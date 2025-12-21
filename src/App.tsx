@@ -11,6 +11,7 @@ import { VelarixButton } from "@/components/VelarixButton";
 import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import History from "./pages/History";
+import Suggestions from "./pages/Suggestions";
 import NotFound from "./pages/NotFound";
 import EffectsOverlay from "./components/EffectsOverlay";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -80,6 +81,13 @@ const App = () => {
                         <>
                           <Navigation />
                           <History />
+                          <VelarixButton />
+                        </>
+                      } />
+                      <Route path="/suggestions" element={
+                        <>
+                          <Navigation />
+                          <Suggestions />
                           <VelarixButton />
                         </>
                       } />
