@@ -40,16 +40,24 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         musicRef.current = music;
 
         // Auto-play with user interaction
-        const handleInteraction = () => {
-            if (musicRef.current && musicRef.current.paused) {
+        const handleInteraction = async () => {
+            if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+                await audioContextRef.current.resume();
+            }
+
+            if (musicRef.current && musicRef.current.paused && musicVolume > 0) {
                 musicRef.current.play().catch(err => console.log('Music autoplay prevented:', err));
             }
-            document.removeEventListener('click', handleInteraction);
+            document.removeEventListener('mousedown', handleInteraction);
+            document.removeEventListener('keydown', handleInteraction);
         };
-        document.addEventListener('click', handleInteraction);
+
+        document.addEventListener('mousedown', handleInteraction);
+        document.addEventListener('keydown', handleInteraction);
 
         return () => {
-            document.removeEventListener('click', handleInteraction);
+            document.removeEventListener('mousedown', handleInteraction);
+            document.removeEventListener('keydown', handleInteraction);
             if (musicRef.current) {
                 musicRef.current.pause();
                 musicRef.current = null;
@@ -63,8 +71,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             musicRef.current.volume = musicVolume;
             if (musicVolume === 0) {
                 musicRef.current.pause();
-            } else if (musicRef.current.paused) {
-                musicRef.current.play().catch(err => console.log('Music play error:', err));
+            } else if (musicRef.current.paused && musicVolume > 0) {
+                // Try to play if we have volume and it's paused
+                // This might fail if no interaction yet, but that's handled by handleInteraction
+                musicRef.current.play().catch(() => { });
             }
         }
     }, [musicVolume]);

@@ -109,25 +109,25 @@ export const Navigation = () => {
                     </span>
                   </div>
                   <Slider
-                    defaultValue={[volume]}
+                    value={[volume]}
                     max={1}
                     step={0.01}
                     onValueChange={(value) => setVolume(value[0])}
                   />
 
-                  {/* Music Volume */}
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium leading-none flex items-center gap-2">
+                  {/* Music Volume Controller */}
+                  <div className="border-t border-border/50 pt-4 mt-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold leading-none flex items-center gap-2 text-primary">
                         <Music2 className="h-4 w-4" />
                         Background Music
                       </h4>
-                      <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
+                      <span className="w-12 rounded-md bg-muted px-2 py-0.5 text-right text-sm font-medium">
                         {Math.round(musicVolume * 100)}%
                       </span>
                     </div>
                     <Slider
-                      defaultValue={[musicVolume]}
+                      value={[musicVolume]}
                       max={1}
                       step={0.01}
                       onValueChange={(value) => setMusicVolume(value[0])}
