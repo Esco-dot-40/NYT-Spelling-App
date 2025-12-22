@@ -34,9 +34,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Create and setup background music
-        const music = new Audio('/backgroundmusic.flac');
+        const music = new Audio('/backgroundmusic.mp3');
         music.loop = true;
         music.volume = musicVolume;
+        music.preload = 'auto';
         musicRef.current = music;
 
         // Auto-play with user interaction
