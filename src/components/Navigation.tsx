@@ -22,14 +22,12 @@ export const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Apply zoom to #ui-content-wrapper instead of #root
+  // Apply zoom to #ui-content-wrapper using CSS zoom property
   useEffect(() => {
     const wrapper = document.getElementById('ui-content-wrapper');
     if (wrapper) {
-      wrapper.style.transform = `scale(${zoomLevel})`;
-      // Increase width/height to compensate for scale down so it still covers the area
-      wrapper.style.width = `${100 / zoomLevel}%`;
-      wrapper.style.minHeight = `${100 / zoomLevel}vh`;
+      // @ts-ignore - zoom is non-standard but works well in Chromium (Discord)
+      wrapper.style.zoom = zoomLevel;
     }
   }, [zoomLevel]);
 

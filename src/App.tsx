@@ -55,7 +55,8 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return <div id="ui-content-wrapper" className="transition-transform duration-300 origin-top">{children}</div>;
+  // Removed transition-transform and origin-top to support CSS 'zoom' scaling
+  return <div id="ui-content-wrapper" className="w-full">{children}</div>;
 };
 
 const App = () => {
