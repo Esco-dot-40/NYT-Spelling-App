@@ -21,8 +21,17 @@ const queryClient = new QueryClient();
 
 const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
   const { isLoading, error } = useDiscord();
+  const [forceShow, setForceShow] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    // If still loading after 4 seconds, just show the app
+    const timer = setTimeout(() => {
+      setForceShow(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading && !forceShow) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground">
         <h2 className="text-2xl font-bold mb-4">Daily Spell</h2>
@@ -31,12 +40,18 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (error && window.location.search.includes('frame_id')) {
+  if (error && window.location.search.includes('frame_id') && !forceShow) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-destructive p-4 text-center">
         <h2 className="text-2xl font-bold mb-4">Connection Failed</h2>
         <p>{error}</p>
         <p className="text-sm mt-4 text-muted-foreground">Try reloading the activity.</p>
+        <button
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          onClick={() => setForceShow(true)}
+        >
+          Continue Anyway
+        </button>
       </div>
     );
   }
@@ -105,4 +120,3 @@ const App = () => {
 };
 
 export default App;
-
