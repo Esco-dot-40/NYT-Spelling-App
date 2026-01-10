@@ -19,6 +19,7 @@ interface GameHistory {
     pangrams_found: string[];
     rank?: string;
     timestamp?: string;
+    puzzle_id?: string;
 }
 
 const getRank = (score: number, maxScore: number = 500): string => {
@@ -45,55 +46,81 @@ export default function History() {
 
     useEffect(() => {
         const fetchHistory = async () => {
-            // Don't fetch if auth is still loading or no user
-            if (authLoading || !user) {
-                return;
-            }
+            if (authLoading || !user) return;
 
             setLoading(true);
             setError(null);
 
             try {
-                let games: GameHistory[] = [];
-                let loadedFromApi = false;
+                const gamesMap = new Map<string, GameHistory>();
 
-                // 1. Try API first (for cross-device history)
-                // Always try API now that proxy is configured
+                // Helper to add game to map (deduping by date/id)
+                const addGame = (game: any) => {
+                    // Normalize fields
+                    const normalized: GameHistory = {
+                        game_date: game.game_date,
+                        score: game.score,
+                        words_found: game.words_found || [],
+                        pangrams_found: game.pangrams_found || [],
+                        rank: game.rank,
+                        timestamp: game.timestamp,
+                        puzzle_id: game.puzzle_id || game.puzzleId // Handle both casing
+                    };
+
+                    // Use puzzle_id unique key, fallback to game_date
+                    const key = normalized.puzzle_id || normalized.game_date;
+                    if (key) {
+                        // If exists, keep the one with higher score or newer timestamp
+                        if (gamesMap.has(key)) {
+                            const existing = gamesMap.get(key)!;
+                            if ((normalized.score > existing.score)) {
+                                gamesMap.set(key, normalized);
+                            }
+                        } else {
+                            gamesMap.set(key, normalized);
+                        }
+                    }
+                };
+
+                // 1. Fetch from API
                 try {
                     const res = await fetch(`/api/history/${user.uid}`);
                     if (res.ok) {
-                        games = await res.json();
-                        loadedFromApi = true;
+                        const apiGames = await res.json();
+                        if (Array.isArray(apiGames)) {
+                            apiGames.forEach(addGame);
+                        }
                     }
                 } catch (e) {
                     console.warn("API History Fetch Failed", e);
                 }
 
-                // 2. Fallback to LocalStorage
-                if (!loadedFromApi) {
-                    console.log("Fetching local games for user:", user.uid);
+                // 2. Fetch from LocalStorage (Always merge these in!)
+                console.log("Fetching local games for user:", user.uid);
+                const newPrefix = `spellorfail_game_${user.uid}_`;
+                const oldPrefix = `alphabee_game_${user.uid}_`;
 
-                    const newPrefix = `spellorfail_game_${user.uid}_`;
-                    const oldPrefix = `alphabee_game_${user.uid}_`;
-
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && (key.startsWith(newPrefix) || key.startsWith(oldPrefix))) {
-                            try {
-                                const data = JSON.parse(localStorage.getItem(key) || "{}");
-                                if (data && data.score !== undefined) {
-                                    games.push(data as GameHistory);
-                                }
-                            } catch (e) {
-                                console.warn("Failed to parse game data for key:", key);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.startsWith(newPrefix) || key.startsWith(oldPrefix))) {
+                        try {
+                            const data = JSON.parse(localStorage.getItem(key) || "{}");
+                            if (data && data.score !== undefined) {
+                                // Extract puzzleId from key if possible
+                                const parts = key.split('_');
+                                const puzzleIdFromKey = parts[parts.length - 1];
+                                addGame({ ...data, puzzleId: data.puzzleId || puzzleIdFromKey });
                             }
+                        } catch (e) {
+                            console.warn("Failed to parse game data for key:", key);
                         }
                     }
                 }
 
-                console.log("Found", games.length, "games");
+                // Convert map to array and sort
+                const games = Array.from(gamesMap.values());
+                console.log("Found", games.length, "games (merged)");
 
-                // Sort by timestamp (newest first), fallback to game_date
                 games.sort((a, b) => {
                     const aTime = a.timestamp || a.game_date || '';
                     const bTime = b.timestamp || b.game_date || '';
@@ -104,9 +131,6 @@ export default function History() {
             } catch (err: any) {
                 console.error("Error fetching history:", err);
                 setError(err.message || "Failed to load history");
-                toast.error("Failed to load history", {
-                    description: err.message || "Unknown error occurred"
-                });
             } finally {
                 setLoading(false);
             }
