@@ -102,10 +102,7 @@ export default function History() {
 
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && (key.startsWith(prefix) || key.startsWith(oldPrefix))) { // Fixed variable reference error here: newPrefix -> prefix (no, wait, logic was fine, need to define 'prefix')
-                        // Actually the previous file had 'prefix' vs 'newPrefix' typo potential.
-                        // Defined above as 'newPrefix'.
-                    }
+                    // FIX: Ensure we use newPrefix here, not undefined 'prefix'
                     if (key && (key.startsWith(newPrefix) || key.startsWith(oldPrefix))) {
                         try {
                             const data = JSON.parse(localStorage.getItem(key) || "{}");
