@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 
 export const Navigation = () => {
   const { theme, toggleTheme } = useTheme();
-  const { user, login, logout, loading } = useAuth();
+  // user auth is now implicit/guest only in this context without backend token exchange
   const { volume, setVolume } = useSound();
   const location = useLocation();
   const [zoomLevel, setZoomLevel] = useState(0.7);
@@ -33,21 +33,6 @@ export const Navigation = () => {
 
   const handleLinkClick = (path: string) => {
     console.log(`Navigating to ${path}`);
-  };
-
-  const handleAuth = async () => {
-    try {
-      if (user) {
-        await logout();
-      } else {
-        await login();
-      }
-    } catch (error: any) {
-      console.error('Auth error:', error);
-      toast.error("Authentication failed", {
-        description: error.message || "Please check your authorized domains in Firebase Console."
-      });
-    }
   };
 
   return (
@@ -173,39 +158,6 @@ export const Navigation = () => {
                 <Sun className="h-5 w-5" />
               )}
             </Button>
-
-            {/* Login/Logout Button with Help Hint */}
-            <div className="relative group">
-              <Button
-                variant={user ? "ghost" : "default"}
-                size="icon"
-                onClick={handleAuth}
-                disabled={loading}
-                title={user ? `Signed in as ${user.displayName}` : "Sign in with Google"}
-              >
-                {user ? (
-                  user.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt="Profile"
-                      className="h-5 w-5 rounded-full"
-                    />
-                  ) : (
-                    <User className="h-5 w-5" />
-                  )
-                ) : (
-                  <LogIn className="h-5 w-5" />
-                )}
-              </Button>
-
-              {/* Onboarding Hint Tooltip for new users */}
-              {!user && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-popover text-popover-foreground text-xs p-3 rounded-md shadow-md border border-border animate-in fade-in slide-in-from-top-1 z-50 hidden group-hover:block">
-                  <p className="font-bold mb-1">Link Account</p>
-                  Click here to link your Discord account and save your history forever!
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
