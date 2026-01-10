@@ -5,7 +5,7 @@ const DISCORD_CLIENT_ID = "1451743881854062685";
 
 interface DiscordContextType {
     discordSdk: DiscordSDK | DiscordSDKMock | null;
-    auth: any | null; // Replace 'any' with specific auth type if available
+    auth: any | null;
     isLoading: boolean;
     error: string | null;
 }
@@ -28,28 +28,28 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
     useEffect(() => {
         const setupDiscord = async () => {
             try {
-                // Detect if running in Discord (query param check is a common way, or just try-catch)
-                // ideally checking for the frame or specific params passed by Discord
-                const isDiscord = window.location.search.includes('frame_id');
-
-                // For now, we instantiate it. If it fails to connect, we might fall back or mock.
-                // However, the SDK might throw if not in an iframe.
+                // Check if in Discord iframe
+                const isDiscord = window.location.search.includes('frame_id') || window.parent !== window;
 
                 let sdk: DiscordSDK | DiscordSDKMock;
 
-                if (isDiscord || import.meta.env.PROD) { // Assume Production is Discord for now, or use checking
+                if (isDiscord) {
                     sdk = new DiscordSDK(DISCORD_CLIENT_ID);
                 } else {
-                    // Local dev mock if needed, or just let it fail/warn
-                    // For this specific 'make it work' request, let's try to initialize the real one
-                    // If we are on localhost:8080 and NOT in discord, this might hang or fail.
-                    // We'll use a mock if we catch an error.
-                    sdk = new DiscordSDK(DISCORD_CLIENT_ID);
+                    console.log("Running in browser mode, mocking Discord SDK.");
+                    // Fallback to mock immediately if not in frame
+                    // Using a basic mock to satisfy the types
+                    // Note: Mock constructor might vary by version, passing minimal args
+                    const mock = new DiscordSDKMock(DISCORD_CLIENT_ID, "12345", "mock_discriminator");
+                    setDiscordSdk(mock);
+                    setIsLoading(false);
+                    return;
                 }
 
                 await sdk.ready();
+                console.log("Discord SDK Ready");
 
-                // Authorize with Discord Client
+                // Authorize
                 const { code } = await sdk.commands.authorize({
                     client_id: DISCORD_CLIENT_ID,
                     response_type: "code",
@@ -61,20 +61,21 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     ],
                 });
 
-                // Normally we'd swap this code for a token via a backend
-                // For now, we just mark as ready if we got a code.
                 setAuth({ code });
                 setDiscordSdk(sdk);
+                console.log("Discord Authenticated");
 
             } catch (err: any) {
                 console.error("Discord SDK Error:", err);
-                // If we fail (e.g. not in Discord), we can optionally fallback to 'browser mode'
-                // or show the error. For now, let's log and maybe allow browser access if that's what the user expects locally.
-                // But the user said "Connecting to Discord...".
-                // Let's set error only if we really think we should be in Discord.
+
+                // If it fails (e.g. strict CSP, or authorize rejected), we fallback to browser mode
+                // This ensures the app always loads.
                 if (window.location.search.includes('frame_id')) {
-                    setError(err.message || "Failed to connect to Discord");
+                    // If we are definitely in Discord and failed, show error for debugging
+                    setError("Discord Connection Failed: " + (err.message || "Unknown error"));
                 }
+
+                // Even on error, stop loading so the app (or error screen) can show
             } finally {
                 setIsLoading(false);
             }
