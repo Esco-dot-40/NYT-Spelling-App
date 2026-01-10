@@ -18,17 +18,23 @@ const Index = () => {
       <div className="relative z-10">
 
         {/* DEBUG: Version & Reset */}
-        <div className="flex justify-between items-center px-4 pt-2 opacity-50 text-[10px] font-mono">
-          <span>v1.3.0 - STRICT MODE</span>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.reload();
-            }}
-            className="hover:text-red-400 hover:underline cursor-pointer"
-          >
-            [FORCE RESET]
-          </button>
+        <div className="flex flex-col gap-1 justify-center items-center px-4 py-6 opacity-30 text-[10px] font-mono hover:opacity-100 transition-opacity">
+          <div className="flex gap-4">
+            <span>v1.3.1</span>
+            <span>Mode: {isDiscord ? "DISCORD" : "WEB"}</span>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="text-red-400 hover:text-red-300 hover:underline cursor-pointer font-bold"
+            >
+              [RESET DATA]
+            </button>
+          </div>
+          <div className="max-w-[300px] truncate text-[8px] text-center">
+            Params: {window.location.search || "None"}
+          </div>
         </div>
 
         {/* DEBUG: Auth Error Banner */}
@@ -114,11 +120,6 @@ const Index = () => {
         </div>
 
         <GameBoard />
-
-        {/* Version Indicator for Debugging */}
-        <div className="text-center py-4 text-xs text-muted-foreground/30 font-mono">
-          v1.2.0 - Discord Native
-        </div>
       </div>
     </>
   );
