@@ -37,7 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const realUser: SimpleUser = {
           uid: discordUser.id,
           email: discordUser.email || null,
-          displayName: discordUser.username || discordUser.global_name || 'Discord User',
+          // Prioritize global_name (Display Name) over username (Handle)
+          displayName: discordUser.global_name || discordUser.username || 'Discord User',
           photoURL: `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
         };
 

@@ -121,10 +121,10 @@ app.post('/api/token', async (req, res) => {
         });
         const userData = await userResponse.json();
 
-        // 3. Upsert User into DB with real name
+        // 3. Upsert User into DB with real name (Prefer Global Name aka Display Name)
         await pool.query(
             'INSERT INTO users (uid, display_name) VALUES ($1, $2) ON CONFLICT (uid) DO UPDATE SET display_name = $2',
-            [userData.id, userData.username] // userData.id is the Discord ID
+            [userData.id, userData.global_name || userData.username]
         );
 
         res.json({ access_token: tokenData.access_token, user: userData });
@@ -247,7 +247,7 @@ app.get('/api/history/:uid', async (req, res) => {
             'SELECT * FROM games WHERE user_uid = $1 ORDER BY timestamp DESC LIMIT 50',
             [req.params.uid]
         );
-        res.json(result.rows);
+        res.json(result.rows[0] || {});
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'DB Error' });
