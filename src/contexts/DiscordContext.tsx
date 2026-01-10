@@ -31,8 +31,9 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         const setupDiscord = async () => {
             try {
-                // Check if in Discord iframe
-                const isDiscord = window.location.search.includes('frame_id') || window.parent !== window;
+                // Check if in Discord iframe - strict check
+                // We rely on frame_id being present in the URL for real Discord environment
+                const isDiscord = window.location.search.includes('frame_id');
 
                 let sdk: DiscordSDK | DiscordSDKMock;
 
