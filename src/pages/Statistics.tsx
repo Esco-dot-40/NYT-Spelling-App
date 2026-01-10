@@ -223,38 +223,77 @@ function LeaderboardTable({ mode, guildId }: { mode: 'global' | 'server', guildI
     );
   }
 
+  // Calculate Highlights
+  const streakMaster = [...leaders].sort((a, b) => (b.current_streak || 0) - (a.current_streak || 0))[0];
+  const busyBee = [...leaders].sort((a, b) => (b.games_played || 0) - (a.games_played || 0))[0];
+  const topRank = leaders[0]; // Already sorted by games_played/rank default
+
   return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-muted/50 text-left">
-              <th className="p-4 font-semibold text-foreground">Rank</th>
-              <th className="p-4 font-semibold text-foreground">Player</th>
-              <th className="p-4 font-semibold text-foreground">Games</th>
-              <th className="p-4 font-semibold text-foreground">Streak</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaders.map((player, i) => (
-              <tr key={i} className="border-t border-border/50 hover:bg-muted/20">
-                <td className="p-4 flex items-center gap-2">
-                  {i === 0 && <Trophy className="w-4 h-4 text-yellow-500" />}
-                  {i === 1 && <Trophy className="w-4 h-4 text-gray-400" />}
-                  {i === 2 && <Trophy className="w-4 h-4 text-amber-600" />}
-                  <span className="font-mono text-muted-foreground">#{i + 1}</span>
-                </td>
-                <td className="p-4 font-medium text-primary">{player?.display_name || "Unknown"}</td>
-                <td className="p-4">{player?.games_played || 0}</td>
-                <td className="p-4 flex items-center gap-1">
-                  {(player?.current_streak || 0) > 0 && <Flame className="w-3 h-3 text-orange-500" />}
-                  {player?.current_streak || 0}
-                </td>
+    <div>
+      {/* Friend Highlights - Only show in Server Mode */}
+      {mode === 'server' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="p-4 bg-yellow-500/10 border-yellow-500/20 border backdrop-blur">
+            <div className="flex items-center gap-3 mb-2">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <span className="font-bold text-yellow-500">Server Champion</span>
+            </div>
+            <div className="text-2xl font-bold">{topRank?.display_name || "None"}</div>
+            <div className="text-xs text-muted-foreground">Rank #1 Overall</div>
+          </Card>
+
+          <Card className="p-4 bg-orange-500/10 border-orange-500/20 border backdrop-blur">
+            <div className="flex items-center gap-3 mb-2">
+              <Flame className="w-5 h-5 text-orange-500" />
+              <span className="font-bold text-orange-500">Streak Master</span>
+            </div>
+            <div className="text-2xl font-bold">{streakMaster?.display_name || "None"}</div>
+            <div className="text-xs text-muted-foreground">{streakMaster?.current_streak || 0} Day Streak</div>
+          </Card>
+
+          <Card className="p-4 bg-blue-500/10 border-blue-500/20 border backdrop-blur">
+            <div className="flex items-center gap-3 mb-2">
+              <Target className="w-5 h-5 text-blue-500" />
+              <span className="font-bold text-blue-500">Busy Bee</span>
+            </div>
+            <div className="text-2xl font-bold">{busyBee?.display_name || "None"}</div>
+            <div className="text-xs text-muted-foreground">{busyBee?.games_played || 0} Games Played</div>
+          </Card>
+        </div>
+      )}
+
+      <Card className="overflow-hidden bg-black/40 backdrop-blur border-white/5">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-black/20 text-left border-b border-white/5">
+                <th className="p-4 font-semibold text-foreground">Rank</th>
+                <th className="p-4 font-semibold text-foreground">Player</th>
+                <th className="p-4 font-semibold text-foreground">Games</th>
+                <th className="p-4 font-semibold text-foreground">Streak</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+            </thead>
+            <tbody>
+              {leaders.map((player, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-4 flex items-center gap-2">
+                    {i === 0 && <Trophy className="w-4 h-4 text-yellow-500" />}
+                    {i === 1 && <Trophy className="w-4 h-4 text-gray-400" />}
+                    {i === 2 && <Trophy className="w-4 h-4 text-amber-600" />}
+                    <span className="font-mono text-muted-foreground">#{i + 1}</span>
+                  </td>
+                  <td className="p-4 font-medium text-primary">{player?.display_name || "Unknown"}</td>
+                  <td className="p-4">{player?.games_played || 0}</td>
+                  <td className="p-4 flex items-center gap-1">
+                    {(player?.current_streak || 0) > 0 && <Flame className="w-3 h-3 text-orange-500" />}
+                    {player?.current_streak || 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
   );
 }
