@@ -73,15 +73,18 @@ export default function Statistics() {
             bestStreak: apiStats.best_streak || 0,
           });
         } else {
-          // 2. LocalStorage Fallback
-          const statsKey = `alphabee_stats_${user.uid}`;
-          const prefix = `alphabee_game_${user.uid}_`;
+          // 2. LocalStorage Fallback (Updated with new keys)
+          const statsKey = `spellorfail_stats_${user.uid}`;
+          const prefix = `spellorfail_game_${user.uid}_`;
           let totalScore = 0;
           let gameCount = 0;
 
+          // Also check for legacy 'alphabee' keys just in case
+          const legacyPrefix = `alphabee_game_${user.uid}_`;
+
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(prefix)) {
+            if (key && (key.startsWith(prefix) || key.startsWith(legacyPrefix))) {
               try {
                 const data = JSON.parse(localStorage.getItem(key) || "{}");
                 if (data && data.score !== undefined) {
@@ -162,7 +165,7 @@ export default function Statistics() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Your Statistics
+            {user?.displayName ? `${user.displayName}'s Statistics` : 'Your Statistics'}
           </span>
         </h1>
 
