@@ -54,6 +54,12 @@ const initDB = async () => {
       );
     `);
         console.log("Database tables checked/created.");
+
+        // Ensure mock user exists for browser testing consistency
+        await pool.query(
+            `INSERT INTO users (uid, display_name) VALUES ('mock_user_123', 'Browser Developer') 
+             ON CONFLICT (uid) DO NOTHING`
+        );
     } catch (err) {
         console.error("Error initializing DB:", err);
     }
@@ -146,7 +152,7 @@ app.post('/api/token', async (req, res) => {
         // 3. Upsert User into DB with real name (Prefer Global Name aka Display Name)
         await pool.query(
             'INSERT INTO users (uid, display_name) VALUES ($1, $2) ON CONFLICT (uid) DO UPDATE SET display_name = $2',
-            [userData.id, userData.username] // userData.username is the Discord handle
+            [userData.id, userData.global_name || userData.username]
         );
 
         res.json({ access_token: tokenData.access_token, user: userData });
