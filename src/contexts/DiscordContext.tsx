@@ -74,59 +74,61 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 // Race against timeout
                 await Promise.race([
                     (async () => {
-                        await sdk.ready();
-                        console.log("Discord SDK Ready");
-
-                        // Authorize
-                        const { code } = await sdk.commands.authorize({
-                            client_id: DISCORD_CLIENT_ID,
-                            response_type: "code",
-                            state: "",
-                            prompt: "none",
-                            scope: [
-                                "identify",
-                                "guilds",
-                            ],
-                        });
-
-                        // Exchange code for token and user info via our backend
-                        let discordUser = null;
                         try {
+                            setAuthError("Waiting for SDK Ready...");
+                            await sdk.ready();
+                            console.log("Discord SDK Ready");
+                            setAuthError("SDK Ready. Authorizing...");
+
+                            // Authorize
+                            const { code } = await sdk.commands.authorize({
+                                client_id: DISCORD_CLIENT_ID,
+                                response_type: "code",
+                                state: "",
+                                prompt: "none",
+                                scope: [
+                                    "identify",
+                                    "guilds",
+                                ],
+                            });
+
+                            setAuthError("Authorized. Exchanging Token...");
+                            console.log("Got auth code", code);
+
+                            // Exchange code for token and user info via our backend
                             const response = await fetch('/api/token', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    code,
-                                    // redirect_uri: window.location.origin // Do NOT send this in Discord Activity mode as it is discordsays.com
-                                }),
+                                body: JSON.stringify({ code }),
                             });
 
-                            if (response.ok) {
-                                const data = await response.json();
-                                discordUser = data.user;
-                                setAuth({ ...data, code });
-                            } else {
-                                console.warn("Backend token exchange failed (possibly dev mode), continue with code only.");
+                            if (!response.ok) {
                                 let errorMessage = "Unknown Auth Error";
                                 try {
                                     const errorData = await response.json();
-                                    console.error("Exchange debug info:", errorData);
                                     errorMessage = errorData.error || errorMessage;
-                                    if (errorData.details && errorData.details.error_description) {
+                                    if (errorData.details?.error_description) {
                                         errorMessage += `: ${errorData.details.error_description}`;
                                     }
-                                } catch (e) { }
-                                setAuthError(errorMessage);
-                                setAuth({ code });
+                                } catch (e) {
+                                    errorMessage += " (Non-JSON response)";
+                                }
+                                // THROW so we hit the catch block and setAuthError properly
+                                throw new Error(errorMessage);
                             }
-                        } catch (e) {
-                            console.error("Token exchange network error", e);
-                            setAuthError("Token exchange network error");
-                            setAuth({ code });
-                        }
 
-                        setDiscordSdk(sdk);
-                        console.log("Discord Authenticated", discordUser ? `as ${discordUser.username}` : "");
+                            const data = await response.json();
+                            setAuth({ ...data, code });
+                            setAuthError(null); // Success! Clear errors.
+
+                            setDiscordSdk(sdk);
+                            console.log("Discord Authenticated", data.user?.username);
+
+                        } catch (e: any) {
+                            console.error("Auth Step Failed:", e);
+                            setAuthError(`Auth Failed: ${e.message || e}`);
+                            // Do NOT set partial auth. Fail hard so the user sees the error.
+                        }
                     })(),
                     timeoutPromise
                 ]);
