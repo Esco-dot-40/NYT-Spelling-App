@@ -31,7 +31,8 @@ export const useGamePersistence = () => {
 
     // Local Storage Fallback (Dev or Offline)
     try {
-      const storageKey = `alphabee_game_${user.uid}_${puzzleId}`;
+      // Updated key from 'alphabee' to 'spellorfail'
+      const storageKey = `spellorfail_game_${user.uid}_${puzzleId}`;
       const savedDataString = localStorage.getItem(storageKey);
 
       if (savedDataString) {
@@ -84,7 +85,7 @@ export const useGamePersistence = () => {
       };
 
       // 1. Save to LocalStorage (Always for speed/offline)
-      const storageKey = `alphabee_game_${user.uid}_${puzzleId}`;
+      const storageKey = `spellorfail_game_${user.uid}_${puzzleId}`;
       localStorage.setItem(storageKey, JSON.stringify(gameData));
 
       // 2. Save to API (if enabled)
