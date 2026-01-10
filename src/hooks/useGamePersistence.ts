@@ -16,7 +16,7 @@ export const useGamePersistence = () => {
     }
 
     // API Mode
-    if (USE_API && import.meta.env.PROD) { // Only use API in PROD or if server running
+    if (USE_API) { // Enabled for Dev + Prod via Proxy
       try {
         const res = await fetch(`/api/progress/${user.uid}/${puzzleId}`);
         if (res.ok) {

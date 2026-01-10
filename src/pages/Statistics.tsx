@@ -48,26 +48,24 @@ export default function Statistics() {
         let loadedFromApi = false;
         let apiStats: any = {};
 
-        // 1. Try API first
-        if (import.meta.env.PROD) {
-          try {
-            const res = await fetch(`/api/stats/${user.uid}`);
-            if (res.ok) {
-              apiStats = await res.json();
-              // Basic check to see if we got real data
-              if (apiStats && (apiStats.games_played !== undefined || apiStats.current_streak !== undefined)) {
-                loadedFromApi = true;
-              }
+        // 1. Try API first (Always enabled via proxy)
+        try {
+          const res = await fetch(`/api/stats/${user.uid}`);
+          if (res.ok) {
+            apiStats = await res.json();
+            // Basic check to see if we got real data
+            if (apiStats && (apiStats.games_played !== undefined || apiStats.current_streak !== undefined)) {
+              loadedFromApi = true;
             }
-          } catch (e) {
-            console.warn("API Stats Fetch Failed", e);
           }
+        } catch (e) {
+          console.warn("API Stats Fetch Failed or Offline", e);
         }
 
         if (loadedFromApi) {
           setStats({
             gamesPlayed: apiStats.games_played || 0,
-            averageScore: 0, // Not currently tracked in SQL stats table, would need aggregation query
+            averageScore: 0,
             bestRank: apiStats.best_rank || "Beginner",
             currentStreak: apiStats.current_streak || 0,
             bestStreak: apiStats.best_streak || 0,

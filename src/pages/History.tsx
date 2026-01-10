@@ -58,16 +58,15 @@ export default function History() {
                 let loadedFromApi = false;
 
                 // 1. Try API first (for cross-device history)
-                if (import.meta.env.PROD) {
-                    try {
-                        const res = await fetch(`/api/history/${user.uid}`);
-                        if (res.ok) {
-                            games = await res.json();
-                            loadedFromApi = true;
-                        }
-                    } catch (e) {
-                        console.warn("API History Fetch Failed", e);
+                // Always try API now that proxy is configured
+                try {
+                    const res = await fetch(`/api/history/${user.uid}`);
+                    if (res.ok) {
+                        games = await res.json();
+                        loadedFromApi = true;
                     }
+                } catch (e) {
+                    console.warn("API History Fetch Failed", e);
                 }
 
                 // 2. Fallback to LocalStorage
