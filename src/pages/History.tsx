@@ -73,11 +73,13 @@ export default function History() {
                 // 2. Fallback to LocalStorage
                 if (!loadedFromApi) {
                     console.log("Fetching local games for user:", user.uid);
-                    const prefix = `alphabee_game_${user.uid}_`;
+
+                    const newPrefix = `spellorfail_game_${user.uid}_`;
+                    const oldPrefix = `alphabee_game_${user.uid}_`;
 
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
-                        if (key && key.startsWith(prefix)) {
+                        if (key && (key.startsWith(newPrefix) || key.startsWith(oldPrefix))) {
                             try {
                                 const data = JSON.parse(localStorage.getItem(key) || "{}");
                                 if (data && data.score !== undefined) {

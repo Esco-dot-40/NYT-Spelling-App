@@ -2,16 +2,30 @@ import { GameBoard } from "@/components/GameBoard";
 import { Navigation } from "@/components/Navigation";
 import { Link } from "react-router-dom";
 import { Lightbulb, ArrowRight, Bug } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <>
       <Navigation />
 
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
       <div className="relative z-10">
+
+        {/* Welcome Greeting */}
+        <div className="mx-auto max-w-5xl px-4 pt-6 text-center md:text-left">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            Welcome back, <span className="text-primary">{user?.displayName || "Player"}</span>!
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base">
+            Ready to challenge your vocabulary today?
+          </p>
+        </div>
+
         {/* Suggestions Banner - Reduced padding/height for cleaner look */}
-        <div className="mx-auto max-w-5xl px-4 pt-6">
+        <div className="mx-auto max-w-5xl px-4 pt-4">
           <Link to="/suggestions" className="block group">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-orange-500/20 border-2 border-yellow-500/30 hover:border-yellow-400 transition-all duration-300 backdrop-blur-sm">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-300/10 to-transparent group-hover:animate-shimmer"></div>
@@ -37,7 +51,7 @@ const Index = () => {
                       Report bugs or share suggestions • <span className="text-yellow-400 font-mono">/suggestions</span>
                     </p>
                     <p className="text-gray-400 text-xs mt-1">
-                      💾 Login to save your data across devices
+                      💾 Progress saves automatically
                     </p>
                   </div>
                 </div>
