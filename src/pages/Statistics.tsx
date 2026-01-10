@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-// import { supabase } from "@/integrations/supabase/client"; // Removed Supabase
 import { Trophy, Target, Flame, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -46,37 +45,66 @@ export default function Statistics() {
       }
 
       try {
-        const statsKey = `alphabee_stats_${user.uid}`;
-        // Also fetch all games to calculate average score
-        const prefix = `alphabee_game_${user.uid}_`;
-        let totalScore = 0;
-        let gameCount = 0;
+        let loadedFromApi = false;
+        let apiStats: any = {};
 
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith(prefix)) {
-            try {
-              const data = JSON.parse(localStorage.getItem(key) || "{}");
-              if (data && data.score !== undefined) {
-                totalScore += data.score;
-                gameCount++;
+        // 1. Try API first
+        if (import.meta.env.PROD) {
+          try {
+            const res = await fetch(`/api/stats/${user.uid}`);
+            if (res.ok) {
+              apiStats = await res.json();
+              // Basic check to see if we got real data
+              if (apiStats && (apiStats.games_played !== undefined || apiStats.current_streak !== undefined)) {
+                loadedFromApi = true;
               }
-            } catch (e) {
-              // ignore
             }
+          } catch (e) {
+            console.warn("API Stats Fetch Failed", e);
           }
         }
 
-        const statsStr = localStorage.getItem(statsKey);
-        const storedStats = statsStr ? JSON.parse(statsStr) : {};
+        if (loadedFromApi) {
+          setStats({
+            gamesPlayed: apiStats.games_played || 0,
+            averageScore: 0, // Not currently tracked in SQL stats table, would need aggregation query
+            bestRank: apiStats.best_rank || "Beginner",
+            currentStreak: apiStats.current_streak || 0,
+            bestStreak: apiStats.best_streak || 0,
+          });
+        } else {
+          // 2. LocalStorage Fallback
+          const statsKey = `alphabee_stats_${user.uid}`;
+          const prefix = `alphabee_game_${user.uid}_`;
+          let totalScore = 0;
+          let gameCount = 0;
 
-        setStats({
-          gamesPlayed: storedStats.games_played || gameCount || 0,
-          averageScore: gameCount > 0 ? Math.round(totalScore / gameCount) : 0,
-          bestRank: storedStats.best_rank || "Beginner",
-          currentStreak: storedStats.current_streak || 0,
-          bestStreak: storedStats.best_streak || 0,
-        });
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(prefix)) {
+              try {
+                const data = JSON.parse(localStorage.getItem(key) || "{}");
+                if (data && data.score !== undefined) {
+                  totalScore += data.score;
+                  gameCount++;
+                }
+              } catch (e) {
+                // ignore
+              }
+            }
+          }
+
+          const statsStr = localStorage.getItem(statsKey);
+          const storedStats = statsStr ? JSON.parse(statsStr) : {};
+
+          setStats({
+            gamesPlayed: storedStats.games_played || gameCount || 0,
+            averageScore: gameCount > 0 ? Math.round(totalScore / gameCount) : 0,
+            bestRank: storedStats.best_rank || "Beginner",
+            currentStreak: storedStats.current_streak || 0,
+            bestStreak: storedStats.best_streak || 0,
+          });
+        }
 
       } catch (error) {
         console.error("Error fetching stats:", error);
