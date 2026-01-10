@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Moon, Sun, BarChart3, History, Home, LogIn, LogOut, User, Volume2, VolumeX, Lightbulb, CornerDownLeft } from "lucide-react";
+import { Moon, Sun, BarChart3, History, Home, LogIn, User, Volume2, VolumeX, Lightbulb, CornerDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -20,6 +20,11 @@ export const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Add click handler logging for debugging
+  const handleLinkClick = (path: string) => {
+    console.log(`Navigating to ${path}`);
+  };
+
   const handleAuth = async () => {
     try {
       if (user) {
@@ -36,7 +41,8 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className="w-full bg-card/80 backdrop-blur-sm border-b border-border relative z-20">
+    // Z-index increased to 50 to ensure it's above the canvas background
+    <nav className="w-full bg-card/80 backdrop-blur-sm border-b border-border relative z-50">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex flex-col items-start group select-none">
@@ -58,7 +64,7 @@ export const Navigation = () => {
               asChild
               className={isActive("/") ? "bg-muted" : ""}
             >
-              <Link to="/">
+              <Link to="/" onClick={() => handleLinkClick("/")}>
                 <Home className="h-5 w-5" />
               </Link>
             </Button>
@@ -69,7 +75,7 @@ export const Navigation = () => {
               asChild
               className={isActive("/statistics") ? "bg-muted" : ""}
             >
-              <Link to="/statistics">
+              <Link to="/statistics" onClick={() => handleLinkClick("/statistics")}>
                 <BarChart3 className="h-5 w-5" />
               </Link>
             </Button>
@@ -80,7 +86,7 @@ export const Navigation = () => {
               asChild
               className={isActive("/history") ? "bg-muted" : ""}
             >
-              <Link to="/history">
+              <Link to="/history" onClick={() => handleLinkClick("/history")}>
                 <History className="h-5 w-5" />
               </Link>
             </Button>
@@ -91,7 +97,7 @@ export const Navigation = () => {
               asChild
               className={isActive("/suggestions") ? "bg-muted" : ""}
             >
-              <Link to="/suggestions">
+              <Link to="/suggestions" onClick={() => handleLinkClick("/suggestions")}>
                 <Lightbulb className="h-5 w-5" />
               </Link>
             </Button>
@@ -102,7 +108,7 @@ export const Navigation = () => {
                   {volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80">
+              <PopoverContent className="w-80 z-50">
                 <div className="flex flex-col gap-4">
                   {/* SFX Volume */}
                   <div className="flex items-center justify-between">
@@ -120,9 +126,6 @@ export const Navigation = () => {
                     step={0.01}
                     onValueChange={(value) => setVolume(value[0])}
                   />
-
-
-
                 </div>
               </PopoverContent>
             </Popover>
