@@ -17,6 +17,20 @@ const Index = () => {
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
       <div className="relative z-10">
 
+        {/* DEBUG: Version & Reset */}
+        <div className="flex justify-between items-center px-4 pt-2 opacity-50 text-[10px] font-mono">
+          <span>v1.3.0 - STRICT MODE</span>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="hover:text-red-400 hover:underline cursor-pointer"
+          >
+            [FORCE RESET]
+          </button>
+        </div>
+
         {/* DEBUG: Auth Error Banner */}
         {isDiscord && authError && (
           <div className="mx-auto max-w-3xl px-4 pt-4">

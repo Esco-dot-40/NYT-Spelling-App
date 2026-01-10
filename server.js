@@ -20,7 +20,17 @@ const pool = new pg.Pool({
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'dist'), {
+    setHeaders: (res, pathStr) => {
+        if (pathStr.endsWith('.html')) {
+            // Force no-cache for index.html to ensure latest version load
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        } else {
+            // Cache other assets (JS/CSS) normally
+            res.setHeader('Cache-Control', 'public, max-age=31536000');
+        }
+    }
+}));
 
 // --- DB Init Helper ---
 const initDB = async () => {
