@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { GameBoard } from "@/components/GameBoard";
 import { Navigation } from "@/components/Navigation";
 import { Link } from "react-router-dom";
@@ -10,8 +11,19 @@ const Index = () => {
   const { authError } = useDiscord();
   const isDiscord = window.location.search.includes('frame_id');
 
+  useEffect(() => {
+    console.log("NUCLEAR CHECK: Code is running.");
+    // alert("NUCLEAR CHECK: I AM RUNNING v1.4.0"); 
+    // Commented out alert to avoid spamming, but visible in console logs if user inspects.
+    // Better: Put a massive fixed overlay that is impossible to miss.
+  }, []);
+
   return (
     <>
+      <div className="fixed top-0 left-0 w-full bg-red-600 text-white font-bold text-center z-[9999] p-2 animate-pulse">
+        NUCLEAR TEST: IF YOU SEE THIS, THE DEPLOYMENT IS WORKING (v1.4.0)
+      </div>
+
       <Navigation />
 
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
