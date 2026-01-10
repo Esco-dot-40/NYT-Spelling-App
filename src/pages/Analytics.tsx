@@ -61,10 +61,10 @@ const Analytics = () => {
 
     if (!authenticated) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <Card className="w-full max-w-md">
+            <div className="min-h-screen flex items-center justify-center relative z-50">
+                <Card className="w-full max-w-md bg-card/90 backdrop-blur border-primary/20 shadow-2xl">
                     <CardHeader>
-                        <CardTitle>Analytics Login</CardTitle>
+                        <CardTitle className="text-2xl text-primary">Analytics Login</CardTitle>
                         <CardDescription>Enter password to view analytics</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -73,11 +73,11 @@ const Analytics = () => {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 placeholder="Password"
                             />
-                            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
-                                Access
+                            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full animate-pulse hover:animate-none">
+                                Access Dashboard
                             </button>
                         </form>
                     </CardContent>
@@ -86,20 +86,53 @@ const Analytics = () => {
         );
     }
 
-    if (isLoading || !data) {
+    if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center relative z-50">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading Analytics...</span>
+            </div>
+        );
+    }
+
+    // Handle Error State explicitly
+    if (!data) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center relative z-50 space-y-4">
+                <Card className="p-6 border-destructive/50 bg-destructive/10">
+                    <h3 className="text-xl font-bold text-destructive flex items-center gap-2">
+                        <span className="text-2xl">⚠️</span> Failed to Load Data
+                    </h3>
+                    <p className="text-muted-foreground mt-2">
+                        Could not fetch analytics. The server might be restarting or the database is initializing.
+                    </p>
+                    <div className="mt-4 flex gap-2 justify-center">
+                        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90">
+                            Retry
+                        </button>
+                    </div>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-                <div className="text-muted-foreground text-sm">
-                    Live updates every 30s
+        <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500 relative z-50 pb-20">
+            <div className="flex justify-between items-center bg-card/50 p-4 rounded-lg backdrop-blur mb-6 border border-border/50">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-primary">Analytics Dashboard</h1>
+                    <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        Live updates every 30s
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono border border-primary/20">
+                        v1.0.2
+                    </div>
                 </div>
             </div>
 

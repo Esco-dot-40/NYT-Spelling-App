@@ -115,7 +115,12 @@ const App = () => {
                           <Suggestions />
                         </>
                       } />
-                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/analytics" element={
+                        <>
+                          <Navigation />
+                          <Analytics />
+                        </>
+                      } />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     <AnalyticsTracker />
