@@ -17,26 +17,6 @@ const Index = () => {
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
       <div className="relative z-10">
 
-        {/* DEBUG: Version & Reset */}
-        <div className="flex flex-col gap-1 justify-center items-center px-4 py-6 opacity-30 text-[10px] font-mono hover:opacity-100 transition-opacity">
-          <div className="flex gap-4">
-            <span>v1.3.1</span>
-            <span>Mode: {isDiscord ? "DISCORD" : "WEB"}</span>
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.location.reload();
-              }}
-              className="text-red-400 hover:text-red-300 hover:underline cursor-pointer font-bold"
-            >
-              [RESET DATA]
-            </button>
-          </div>
-          <div className="max-w-[300px] truncate text-[8px] text-center">
-            Params: {window.location.search || "None"}
-          </div>
-        </div>
-
         {/* DEBUG: Auth Error Banner */}
         {isDiscord && authError && (
           <div className="mx-auto max-w-3xl px-4 pt-4">
