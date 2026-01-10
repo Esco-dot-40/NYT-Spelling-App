@@ -1,9 +1,11 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDiscord } from "@/contexts/DiscordContext";
 
 export const useGamePersistence = () => {
   const { user } = useAuth();
+  const { discordSdk } = useDiscord();
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Toggle this to use LocalStorage vs API
@@ -81,7 +83,8 @@ export const useGamePersistence = () => {
         pangrams_found: pangramsFound,
         rank: currentRank,
         game_date: today,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        guild_id: discordSdk?.guildId // Add Guild ID context
       };
 
       // 1. Save to LocalStorage (Always for speed/offline)

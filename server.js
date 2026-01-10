@@ -61,9 +61,16 @@ const initDB = async () => {
         current_streak INTEGER DEFAULT 0,
         best_streak INTEGER DEFAULT 0,
         best_rank VARCHAR(50),
-        last_played_date DATE
+        last_played_date DATE,
+        guild_id VARCHAR(255)
       );
     `);
+
+        // Manual Migration for existing tables
+        try {
+            await pool.query("ALTER TABLE stats ADD COLUMN IF NOT EXISTS guild_id VARCHAR(255)");
+        } catch (e) { console.log("Migration note: guild_id col check"); }
+
         console.log("Database tables checked/created.");
 
         // Ensure mock user exists for browser testing consistency
@@ -186,16 +193,25 @@ app.post('/api/token', async (req, res) => {
     }
 });
 
-// Get Leaderboard (Top 10 by Games Played)
+// Get Leaderboard (Global or Guild)
 app.get('/api/leaderboard', async (req, res) => {
+    const { guild_id } = req.query;
     try {
-        const result = await pool.query(`
+        let query = `
             SELECT u.display_name, s.games_played, s.current_streak, s.best_streak 
             FROM stats s 
             JOIN users u ON s.user_uid = u.uid 
-            ORDER BY s.games_played DESC 
-            LIMIT 10
-        `);
+        `;
+
+        const params = [];
+        if (guild_id) {
+            query += ` WHERE s.guild_id = $1 `;
+            params.push(guild_id);
+        }
+
+        query += ` ORDER BY s.games_played DESC LIMIT 50`;
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -220,12 +236,12 @@ app.get('/api/progress/:uid/:puzzleId', async (req, res) => {
 
 // Save Progress
 app.post('/api/progress', async (req, res) => {
-    const { uid, puzzleId, score, words_found, pangrams_found, rank, game_date } = req.body;
+    const { uid, puzzleId, score, words_found, pangrams_found, rank, game_date, guild_id } = req.body;
 
     if (!uid) return res.status(400).json({ error: 'Missing UID' });
 
     try {
-        // Ensure user exists (Upsert with NULL name if not already there, though /api/token should have handled this)
+        // Ensure user exists
         await pool.query(
             'INSERT INTO users (uid) VALUES ($1) ON CONFLICT (uid) DO NOTHING',
             [uid]
@@ -245,13 +261,11 @@ app.post('/api/progress', async (req, res) => {
     `, [uid, puzzleId, score, words_found, pangrams_found, rank, game_date]);
 
         // --- Post-Save Stats Aggregation ---
-        // Fetch all games for this user to calculate streaks and totals
         const gamesRes = await pool.query(
             'SELECT game_date, rank, score FROM games WHERE user_uid = $1 ORDER BY game_date ASC',
             [uid]
         );
         const games = gamesRes.rows;
-
         const games_played = games.length;
 
         // Calculate Streaks
@@ -260,31 +274,23 @@ app.post('/api/progress', async (req, res) => {
         let temp_streak = 0;
         let last_date = null;
 
-        // Simple streak calculation (dates are strings or objects)
         games.forEach(g => {
             const d = new Date(g.game_date);
-            // Normalize to YYYY-MM-DD
             const dateStr = d.toISOString().split('T')[0];
-
             if (!last_date) {
                 temp_streak = 1;
             } else {
                 const prev = new Date(last_date);
                 const diffTime = Math.abs(d - prev);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays === 1) {
-                    temp_streak++;
-                } else if (diffDays > 1) {
-                    temp_streak = 1;
-                }
-                // if diffDays === 0 (same day), ignore/don't reset
+                if (diffDays === 1) temp_streak++;
+                else if (diffDays > 1) temp_streak = 1;
             }
             if (temp_streak > best_streak) best_streak = temp_streak;
             last_date = dateStr;
         });
 
-        // Current streak logic: check if last game was today or yesterday
+        // Current streak logic
         const today = new Date().toISOString().split('T')[0];
         const yesterdayDate = new Date();
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
@@ -296,14 +302,10 @@ app.post('/api/progress', async (req, res) => {
             current_streak = 0;
         }
 
-        // Find best rank (simple heuristic: just store the latest one or maybe we need an ordering)
-        // For now, let's keep the user's best rank ever achieved? 
-        // Or just let the FE decide? The Stats table has 'best_rank'.
-        // Ranks: Beginner, Good, Solid... Queen Bee.
+        // Best Rank Logic
         const rankOrder = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee", "Perfect!"];
         let best_rank = "Beginner";
         let max_rank_idx = -1;
-
         games.forEach(g => {
             const idx = rankOrder.indexOf(g.rank);
             if (idx > max_rank_idx) {
@@ -312,18 +314,19 @@ app.post('/api/progress', async (req, res) => {
             }
         });
 
-        // Update Stats Table
+        // Update Stats Table (Include Guild ID)
         await pool.query(`
-            INSERT INTO stats (user_uid, games_played, current_streak, best_streak, best_rank, last_played_date)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO stats (user_uid, games_played, current_streak, best_streak, best_rank, last_played_date, guild_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (user_uid)
             DO UPDATE SET
                 games_played = EXCLUDED.games_played,
                 current_streak = EXCLUDED.current_streak,
                 best_streak = EXCLUDED.best_streak,
                 best_rank = EXCLUDED.best_rank,
-                last_played_date = EXCLUDED.last_played_date;
-        `, [uid, games_played, current_streak, best_streak, best_rank, last_date]);
+                last_played_date = EXCLUDED.last_played_date,
+                guild_id = COALESCE($7, stats.guild_id); 
+        `, [uid, games_played, current_streak, best_streak, best_rank, last_date, guild_id]); // Use COALESCE to keep old guild if new is null
 
         res.json({ success: true, stats_updated: true });
     } catch (err) {

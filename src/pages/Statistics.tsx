@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Trophy, Target, Flame, Calendar } from "lucide-react";
+import { Trophy, Target, Flame, Calendar, Users, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDiscord } from "@/contexts/DiscordContext";
 
+// ... (getRank function remains same)
 const getRank = (score: number, maxScore: number): string => {
   const percentage = (score / maxScore) * 100;
   if (percentage === 0) return "Beginner";
@@ -28,6 +30,13 @@ interface Stats {
 
 export default function Statistics() {
   const { user, loading: authLoading } = useAuth();
+  const { discordSdk } = useDiscord();
+  const [leaderboardMode, setLeaderboardMode] = useState<'global' | 'server'>('global');
+
+  // Check if we are in a guild to enable Server tab
+  const isInGuild = !!discordSdk?.guildId;
+
+  // ... (stats fetching logic remains largely the same, just keeping it here for context if replaced block is large)
   const [stats, setStats] = useState<Stats>({
     gamesPlayed: 0,
     averageScore: 0,
@@ -46,18 +55,11 @@ export default function Statistics() {
 
       try {
         let apiStats: any = {};
-
-        // 1. Fetch API Stats
         try {
           const res = await fetch(`/api/stats/${user.uid}`);
-          if (res.ok) {
-            apiStats = await res.json();
-          }
-        } catch (e) {
-          console.warn("API Stats Fetch Failed", e);
-        }
+          if (res.ok) apiStats = await res.json();
+        } catch (e) { console.warn("API Stats Fetch Failed", e); }
 
-        // 2. Fetch Local Stats (Always calculate)
         const statsKey = `spellorfail_stats_${user.uid}`;
         const prefix = `spellorfail_game_${user.uid}_`;
         const legacyPrefix = `alphabee_game_${user.uid}_`;
@@ -81,25 +83,9 @@ export default function Statistics() {
         const statsStr = localStorage.getItem(statsKey);
         const storedLocalStats = statsStr ? JSON.parse(statsStr) : {};
 
-        // 3. Merge Logic: Max(API, Local)
-        // This ensures if API is 0 (fresh db) but Local has 5 games, we show 5.
-        // If API has 10 (played elsewhere) and Local has 2, we show 10.
-        const mergedGamesPlayed = Math.max(
-          (apiStats.games_played || 0),
-          (storedLocalStats.games_played || localGameCount || 0)
-        );
-
-        const mergedBestStreak = Math.max(
-          (apiStats.best_streak || 0),
-          (storedLocalStats.best_streak || 0)
-        );
-
-        const mergedCurrentStreak = Math.max(
-          (apiStats.current_streak || 0),
-          (storedLocalStats.current_streak || 0)
-        );
-
-        // Calculate average score (prefer local calculation if valid, otherwise 0)
+        const mergedGamesPlayed = Math.max((apiStats.games_played || 0), (storedLocalStats.games_played || localGameCount || 0));
+        const mergedBestStreak = Math.max((apiStats.best_streak || 0), (storedLocalStats.best_streak || 0));
+        const mergedCurrentStreak = Math.max((apiStats.current_streak || 0), (storedLocalStats.current_streak || 0));
         const avgScore = localGameCount > 0 ? Math.round(localTotalScore / localGameCount) : 0;
 
         setStats({
@@ -121,36 +107,11 @@ export default function Statistics() {
   }, [user, authLoading]);
 
   const statCards = [
-    {
-      title: "Games Played",
-      value: stats.gamesPlayed,
-      icon: Calendar,
-      color: "from-primary to-accent",
-    },
-    {
-      title: "Average Score",
-      value: stats.averageScore,
-      icon: Target,
-      color: "from-accent to-primary",
-    },
-    {
-      title: "Best Rank",
-      value: stats.bestRank,
-      icon: Trophy,
-      color: "from-primary to-accent",
-    },
-    {
-      title: "Current Streak",
-      value: `${stats.currentStreak} ${stats.currentStreak === 1 ? "day" : "days"}`,
-      icon: Flame,
-      color: "from-accent to-primary",
-    },
-    {
-      title: "Best Streak",
-      value: `${stats.bestStreak} ${stats.bestStreak === 1 ? "day" : "days"}`,
-      icon: Flame,
-      color: "from-primary to-accent",
-    },
+    { title: "Games Played", value: stats.gamesPlayed, icon: Calendar, color: "from-primary to-accent" },
+    { title: "Average Score", value: stats.averageScore, icon: Target, color: "from-accent to-primary" },
+    { title: "Best Rank", value: stats.bestRank, icon: Trophy, color: "from-primary to-accent" },
+    { title: "Current Streak", value: `${stats.currentStreak} ${stats.currentStreak === 1 ? "day" : "days"}`, icon: Flame, color: "from-accent to-primary" },
+    { title: "Best Streak", value: `${stats.bestStreak} ${stats.bestStreak === 1 ? "day" : "days"}`, icon: Flame, color: "from-primary to-accent" },
   ];
 
   if (loading || authLoading) {
@@ -171,27 +132,20 @@ export default function Statistics() {
         </h1>
 
         {stats.gamesPlayed === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-lg text-muted-foreground">
-              No games played yet. Start playing to see your statistics!
-            </p>
+          <Card className="p-8 text-center text-muted-foreground">
+            No games played yet. Start playing to see your statistics!
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {statCards.map((stat, index) => (
-              <Card
-                key={index}
-                className="p-6 shadow-[var(--velarix-glow)] hover:scale-105 transition-transform"
-              >
+              <Card key={index} className="p-6 shadow-[var(--velarix-glow)] hover:scale-105 transition-transform">
                 <div className="flex items-start justify-between mb-4">
                   <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color}`}>
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-muted-foreground mb-2">{stat.title}</h3>
-                <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {stat.value}
-                </p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</p>
               </Card>
             ))}
           </div>
@@ -199,8 +153,31 @@ export default function Statistics() {
 
         {/* Leaderboard Section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-center mb-6 text-white">Global Leaderboard</h2>
-          <LeaderboardTable />
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-white">Leaderboard</h2>
+
+            {/* Toggle Tabs */}
+            <div className="flex bg-muted/30 p-1 rounded-lg">
+              <button
+                onClick={() => setLeaderboardMode('global')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${leaderboardMode === 'global' ? 'bg-primary text-primary-foreground shadow' : 'hover:bg-muted/50 text-muted-foreground'
+                  }`}
+              >
+                <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> Global</span>
+              </button>
+              <button
+                onClick={() => isInGuild && setLeaderboardMode('server')}
+                disabled={!isInGuild}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${leaderboardMode === 'server' ? 'bg-primary text-primary-foreground shadow' : 'hover:bg-muted/50 text-muted-foreground'
+                  } ${!isInGuild ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={!isInGuild ? "Launch in a Discord Server to see Server Leaderboard" : ""}
+              >
+                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> Server</span>
+              </button>
+            </div>
+          </div>
+
+          <LeaderboardTable mode={leaderboardMode} guildId={discordSdk?.guildId || undefined} />
         </div>
 
       </div>
@@ -208,28 +185,44 @@ export default function Statistics() {
   );
 }
 
-function LeaderboardTable() {
+function LeaderboardTable({ mode, guildId }: { mode: 'global' | 'server', guildId?: string }) {
   const [leaders, setLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/leaderboard')
+    setLoading(true);
+    let url = '/api/leaderboard';
+    if (mode === 'server' && guildId) {
+      url += `?guild_id=${guildId}`;
+    }
+
+    fetch(url)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
       })
       .then(data => {
         if (Array.isArray(data)) setLeaders(data);
+        else setLeaders([]);
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to load leaderboard", err);
         setLoading(false);
       });
-  }, []);
+  }, [mode, guildId]);
 
-  if (loading) return <div className="text-center text-muted-foreground">Loading leaders...</div>;
-  if (leaders.length === 0) return <div className="text-center text-muted-foreground">No global stats yet. Be the first!</div>;
+  if (loading) return <div className="text-center text-muted-foreground py-8">Loading leaders...</div>;
+
+  if (leaders.length === 0) {
+    return (
+      <Card className="p-8 text-center text-muted-foreground">
+        {mode === 'server'
+          ? "No one in this server has played yet. Be the first!"
+          : "No global stats yet."}
+      </Card>
+    );
+  }
 
   return (
     <Card className="overflow-hidden">
