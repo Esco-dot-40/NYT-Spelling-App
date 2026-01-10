@@ -61,12 +61,6 @@ export const Navigation = () => {
             <div className="bg-gradient-to-br from-primary via-primary to-accent bg-clip-text text-transparent leading-none">
               <h1 className="text-3xl md:text-4xl font-[900] tracking-tighter italic">SpellOrFail</h1>
             </div>
-            <div className="flex items-center gap-1.5 ml-4 -mt-1 opacity-60 group-hover:opacity-100 transition-all duration-300">
-              <CornerDownLeft className="h-3.5 w-3.5 text-primary/70" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                By Velarix
-              </span>
-            </div>
           </Link>
 
           <div className="flex items-center gap-2">

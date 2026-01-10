@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { DiscordProvider, useDiscord } from "@/contexts/DiscordContext";
 import { SoundProvider } from "@/contexts/SoundContext";
 import { Navigation } from "@/components/Navigation";
-import { VelarixButton } from "@/components/VelarixButton";
 import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import History from "./pages/History";
@@ -93,21 +92,18 @@ const App = () => {
                         <>
                           <Navigation />
                           <Statistics />
-                          <VelarixButton />
                         </>
                       } />
                       <Route path="/history" element={
                         <>
                           <Navigation />
                           <History />
-                          <VelarixButton />
                         </>
                       } />
                       <Route path="/suggestions" element={
                         <>
                           <Navigation />
                           <Suggestions />
-                          <VelarixButton />
                         </>
                       } />
                       <Route path="*" element={<NotFound />} />

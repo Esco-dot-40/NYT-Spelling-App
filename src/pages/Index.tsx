@@ -1,6 +1,5 @@
 import { GameBoard } from "@/components/GameBoard";
 import { Navigation } from "@/components/Navigation";
-import { VelarixButton } from "@/components/VelarixButton";
 import { Link } from "react-router-dom";
 import { Lightbulb, ArrowRight, Bug } from "lucide-react";
 
@@ -11,11 +10,10 @@ const Index = () => {
 
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
       <div className="relative z-10">
-        {/* Suggestions Banner */}
+        {/* Suggestions Banner - Reduced padding/height for cleaner look */}
         <div className="mx-auto max-w-5xl px-4 pt-6">
           <Link to="/suggestions" className="block group">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-orange-500/20 border-2 border-yellow-500/30 hover:border-yellow-400 transition-all duration-300 backdrop-blur-sm">
-              {/* Animated gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-300/10 to-transparent group-hover:animate-shimmer"></div>
 
               <div className="relative p-6 flex items-center justify-between gap-4">
@@ -55,7 +53,6 @@ const Index = () => {
         </div>
 
         <GameBoard />
-        <VelarixButton />
       </div>
     </>
   );
