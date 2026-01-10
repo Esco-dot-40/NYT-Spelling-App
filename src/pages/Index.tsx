@@ -100,13 +100,6 @@ const Index = () => {
         </div>
 
         <GameBoard />
-
-        {/* Minimal Debug Info */}
-        <div className="text-center py-2 opacity-50 text-[10px] font-mono">
-          Mode: {isDiscord ? "DISCORD" : "WEB"} | {authError ? "Auth Err: " + authError : "No Error"}
-          <br />
-          Params: {window.location.search || "(empty)"}
-        </div>
       </div>
     </>
   );
