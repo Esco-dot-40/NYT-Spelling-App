@@ -31,7 +31,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // 1. Check for existing "Guest" or "Discord" session in localStorage
+      // 1. Check if we have a REAL Discord authenticated user from our backend exchange
+      if (discordAuth?.user) {
+        const discordUser = discordAuth.user;
+        const realUser: SimpleUser = {
+          uid: discordUser.id,
+          email: discordUser.email || null,
+          displayName: discordUser.username || discordUser.global_name || 'Discord User',
+          photoURL: `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+        };
+
+        setUser(realUser);
+
+        // Persist this identity key for local lookups if needed
+        const storageKey = 'alphabee_user_identity';
+        localStorage.setItem(storageKey, JSON.stringify(realUser));
+
+        finishLoading(realUser);
+        return;
+      }
+
+      // 2. Fallback: Check for existing "Guest" or stored session in localStorage
       const storageKey = 'alphabee_user_identity';
       const storedIdentity = localStorage.getItem(storageKey);
 
@@ -50,10 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem(storageKey, JSON.stringify(currentUser));
       }
 
-      // If we ever get real Discord data (via backend handshake), we would overwrite this.
-      // For now, this ensures we ALWAYS have a user, so saving works.
       setUser(currentUser);
+      finishLoading(currentUser);
+    };
 
+    const finishLoading = (currentUser: SimpleUser) => {
       // Load their player data
       const dataKey = `alphabee_user_${currentUser.uid}`;
       const savedDataStr = localStorage.getItem(dataKey);
@@ -66,12 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setPlayerData(initialData);
       }
-
       setLoading(false);
     };
 
     initializeAuth();
-  }, [discordAuth]);
+  }, [discordAuth]); // Re-run when discordAuth changes (i.e. token exchange completes)
 
   const login = async () => {
     // In this local-only / no-backend mode, "login" is automatic/persistent.

@@ -66,6 +66,92 @@ if (process.env.DATABASE_URL) {
 
 // --- API Routes ---
 
+// OAuth Token Exchange & User Sync
+app.post('/api/token', async (req, res) => {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: 'No code provided' });
+
+    // Fallback for dev/mock mode
+    if (code === 'mock_code') {
+        return res.json({
+            access_token: 'mock_token',
+            user: {
+                id: 'mock_user_id',
+                username: 'Mock User',
+                avatar: null
+            }
+        });
+    }
+
+    if (!process.env.DISCORD_CLIENT_SECRET) {
+        console.warn("DISCORD_CLIENT_SECRET not set.");
+        return res.status(503).json({ error: 'Server not configured for OAuth' });
+    }
+
+    try {
+        // 1. Exchange Code for Token
+        const params = new URLSearchParams({
+            client_id: process.env.DISCORD_CLIENT_ID,
+            client_secret: process.env.DISCORD_CLIENT_SECRET,
+            grant_type: 'authorization_code',
+            code,
+            // Redirect URI is required by Discord API even if not used for redirect in embedded apps
+            // It just needs to match one of the redirect URIs in the developer portal
+            // For embedded apps, it's often not checked strictly if using 'frame' but good to have.
+            // We use a dummy local one or the fetch origin.
+            redirect_uri: req.headers.origin || 'http://localhost:5173'
+        });
+
+        const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params,
+        });
+
+        const tokenData = await tokenResponse.json();
+
+        if (!tokenData.access_token) {
+            console.error("OAuth Token Error:", tokenData);
+            return res.status(400).json({ error: 'Failed to get access token from Discord' });
+        }
+
+        // 2. Fetch User Info
+        const userResponse = await fetch('https://discord.com/api/users/@me', {
+            headers: { authorization: `Bearer ${tokenData.access_token}` },
+        });
+        const userData = await userResponse.json();
+
+        // 3. Upsert User into DB with real name
+        await pool.query(
+            'INSERT INTO users (uid, display_name) VALUES ($1, $2) ON CONFLICT (uid) DO UPDATE SET display_name = $2',
+            [userData.id, userData.username] // userData.id is the Discord ID
+        );
+
+        res.json({ access_token: tokenData.access_token, user: userData });
+
+    } catch (err) {
+        console.error("Token Exchange Error:", err);
+        res.status(500).json({ error: 'Internal Server Error during Auth' });
+    }
+});
+
+// Get Leaderboard (Top 10 by Games Played)
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT u.display_name, s.games_played, s.current_streak, s.best_streak 
+            FROM stats s 
+            JOIN users u ON s.user_uid = u.uid 
+            ORDER BY s.games_played DESC 
+            LIMIT 10
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'DB Error' });
+    }
+});
+
 // Get User Progress for a specific puzzle
 app.get('/api/progress/:uid/:puzzleId', async (req, res) => {
     const { uid, puzzleId } = req.params;
@@ -88,7 +174,7 @@ app.post('/api/progress', async (req, res) => {
     if (!uid) return res.status(400).json({ error: 'Missing UID' });
 
     try {
-        // Ensure user exists
+        // Ensure user exists (Upsert with NULL name if not already there, though /api/token should have handled this)
         await pool.query(
             'INSERT INTO users (uid) VALUES ($1) ON CONFLICT (uid) DO NOTHING',
             [uid]
@@ -141,7 +227,12 @@ app.post('/api/stats', async (req, res) => {
 // Get Stats
 app.get('/api/stats/:uid', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM stats WHERE user_uid = $1', [req.params.uid]);
+        const result = await pool.query(`
+            SELECT s.*, u.display_name 
+            FROM stats s 
+            JOIN users u ON s.user_uid = u.uid 
+            WHERE user_uid = $1
+        `, [req.params.uid]);
         res.json(result.rows[0] || {});
     } catch (err) {
         console.error(err);

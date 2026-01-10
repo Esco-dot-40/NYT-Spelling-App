@@ -66,9 +66,32 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                                 "guilds",
                             ],
                         });
-                        setAuth({ code });
+
+                        // Exchange code for token and user info via our backend
+                        let discordUser = null;
+                        try {
+                            // Only try to exchange if we aren't in mock mode, or if backend supports it
+                            const response = await fetch('/api/token', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code }),
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                discordUser = data.user;
+                                setAuth({ ...data, code }); // Store token and user object
+                            } else {
+                                console.warn("Backend token exchange failed (possibly dev mode), continue with code only.");
+                                setAuth({ code });
+                            }
+                        } catch (e) {
+                            console.error("Token exchange network error", e);
+                            setAuth({ code });
+                        }
+
                         setDiscordSdk(sdk);
-                        console.log("Discord Authenticated");
+                        console.log("Discord Authenticated", discordUser ? `as ${discordUser.username}` : "");
                     })(),
                     timeoutPromise
                 ]);
@@ -95,9 +118,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (isLoading) {
                 console.warn("Discord Context: Force finishing loading state due to timeout.");
                 setIsLoading(false);
-                // If we forced it and have no SDK, set an error so user knows why it might be broken
                 if (!discordSdk) {
-                    // Only set error if not already set, to avoid overwriting specific errors
                     setError(prev => prev || "Connection timed out - loaded in offline mode");
                 }
             }
