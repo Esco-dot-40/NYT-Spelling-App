@@ -6,20 +6,32 @@ export const useGamePersistence = () => {
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Helper to get storage key
-  const getStorageKey = (uid: string, puzzleId: string) => `alphabee_game_${uid}_${puzzleId}`;
-  const getStatsKey = (uid: string) => `alphabee_stats_${uid}`;
+  // Toggle this to use LocalStorage vs API
+  const USE_API = true;
 
   const loadProgress = useCallback(async (puzzleId: string) => {
-    // If no user, we can't load user-specific data yet. 
-    // Ideally we could support "guest" play with a generic ID, but the app flow expects a user for now.
     if (!user) {
       setIsLoaded(true);
       return null;
     }
 
+    // API Mode
+    if (USE_API && import.meta.env.PROD) { // Only use API in PROD or if server running
+      try {
+        const res = await fetch(`/api/progress/${user.uid}/${puzzleId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsLoaded(true);
+          return data;
+        }
+      } catch (e) {
+        console.error("API Load Error", e);
+      }
+    }
+
+    // Local Storage Fallback (Dev or Offline)
     try {
-      const storageKey = getStorageKey(user.uid, puzzleId);
+      const storageKey = `alphabee_game_${user.uid}_${puzzleId}`;
       const savedDataString = localStorage.getItem(storageKey);
 
       if (savedDataString) {
@@ -27,12 +39,10 @@ export const useGamePersistence = () => {
         setIsLoaded(true);
         return savedData;
       }
-
       setIsLoaded(true);
       return null;
     } catch (error: any) {
       console.error('Error loading progress:', error);
-      // Don't toast on load failure usually, just log
       setIsLoaded(true);
       return null;
     }
@@ -43,8 +53,6 @@ export const useGamePersistence = () => {
 
     try {
       const today = new Date().toISOString().split('T')[0];
-      const storageKey = getStorageKey(user.uid, puzzleId);
-      const statsKey = getStatsKey(user.uid);
 
       // Calculate rank
       const getRank = (score: number, maxScore: number): string => {
@@ -64,74 +72,32 @@ export const useGamePersistence = () => {
 
       const currentRank = getRank(score, maxScore);
 
-      // Get user stats for streak
-      const statsJson = localStorage.getItem(statsKey);
-      const stats = statsJson ? JSON.parse(statsJson) : {
-        current_streak: 0,
-        best_streak: 0,
-        last_played_date: null,
-        best_rank: "Beginner",
-        games_played: 0
-      };
-
-      let currentStreak = stats.current_streak || 0;
-      let bestStreak = stats.best_streak || 0;
-      let bestRank = stats.best_rank || "Beginner";
-      let gamesPlayed = stats.games_played || 0;
-
-      // Check current rank vs best rank helper
-      const rankValue = (rank: string) => {
-        const ranks = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee", "Perfect!"];
-        return ranks.indexOf(rank);
-      };
-
-      // Update streaks logic
-      // Note: "last_played_date" tracks the last day they played *any* game
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-      if (stats.last_played_date !== today) {
-        if (stats.last_played_date === yesterdayStr) {
-          currentStreak += 1;
-        } else if (stats.last_played_date && stats.last_played_date < yesterdayStr) {
-          // Reset streak if we missed a day
-          currentStreak = 1;
-        } else if (!stats.last_played_date) {
-          // First game ever
-          currentStreak = 1;
-        }
-        // If playing multiple times today, streak doesn't increase, but also doesn't reset
-        gamesPlayed += 1;
-      }
-
-      bestStreak = Math.max(currentStreak, bestStreak);
-
-      if (rankValue(currentRank) > rankValue(bestRank)) {
-        bestRank = currentRank;
-      }
-
       const gameData = {
+        uid: user.uid,
+        puzzleId: puzzleId,
         score,
         words_found: wordsFound,
         pangrams_found: pangramsFound,
-        game_date: today,
-        puzzle_id: puzzleId,
         rank: currentRank,
+        game_date: today,
         timestamp: new Date().toISOString()
       };
 
-      // Save Game
+      // 1. Save to LocalStorage (Always for speed/offline)
+      const storageKey = `alphabee_game_${user.uid}_${puzzleId}`;
       localStorage.setItem(storageKey, JSON.stringify(gameData));
 
-      // Save Stats
-      localStorage.setItem(statsKey, JSON.stringify({
-        current_streak: currentStreak,
-        best_streak: bestStreak,
-        last_played_date: today,
-        best_rank: bestRank,
-        games_played: gamesPlayed
-      }));
+      // 2. Save to API (if enabled)
+      if (USE_API) {
+        // Fire and forget - don't await blocking
+        fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(gameData)
+        }).then(res => {
+          if (!res.ok) console.warn("Failed to sync to DB");
+        }).catch(err => console.warn("API Sync Error", err));
+      }
 
     } catch (error: any) {
       console.error('Error saving progress:', error);
