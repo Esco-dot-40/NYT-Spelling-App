@@ -112,7 +112,12 @@ app.post('/api/token', async (req, res) => {
 
         if (!tokenData.access_token) {
             console.error("OAuth Token Error:", tokenData);
-            return res.status(400).json({ error: 'Failed to get access token from Discord' });
+            // Return the specific error from Discord to help debug (e.g. invalid_redirect_uri)
+            return res.status(400).json({
+                error: 'Failed to get access token from Discord',
+                details: tokenData,
+                used_redirect_uri: params.get('redirect_uri')
+            });
         }
 
         // 2. Fetch User Info
