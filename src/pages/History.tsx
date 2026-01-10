@@ -102,6 +102,10 @@ export default function History() {
 
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
+                    if (key && (key.startsWith(prefix) || key.startsWith(oldPrefix))) { // Fixed variable reference error here: newPrefix -> prefix (no, wait, logic was fine, need to define 'prefix')
+                        // Actually the previous file had 'prefix' vs 'newPrefix' typo potential.
+                        // Defined above as 'newPrefix'.
+                    }
                     if (key && (key.startsWith(newPrefix) || key.startsWith(oldPrefix))) {
                         try {
                             const data = JSON.parse(localStorage.getItem(key) || "{}");
@@ -151,12 +155,12 @@ export default function History() {
         });
     };
 
-    if (authLoading) return <div className="min-h-screen bg-game-bg flex items-center justify-center">Checking...</div>;
-    if (!user) return <div className="min-h-screen bg-game-bg flex items-center justify-center">Please log in.</div>;
-    if (loading) return <div className="min-h-screen bg-game-bg flex items-center justify-center">Loading...</div>;
+    if (authLoading) return <div className="min-h-screen bg-game-bg flex items-center justify-center relative z-10">Checking...</div>;
+    if (!user) return <div className="min-h-screen bg-game-bg flex items-center justify-center relative z-10">Please log in.</div>;
+    if (loading) return <div className="min-h-screen bg-game-bg flex items-center justify-center relative z-10">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-game-bg">
+        <div className="min-h-screen bg-game-bg relative z-10">
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
                     <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">

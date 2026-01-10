@@ -42,6 +42,18 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     console.log("Running in browser mode, mocking Discord SDK.");
                     const mock = new DiscordSDKMock(DISCORD_CLIENT_ID, "12345", "mock_discriminator");
                     setDiscordSdk(mock);
+
+                    // MOCK AUTH for browser testing so we don't see "Guest"
+                    setAuth({
+                        user: {
+                            id: "mock_user_123",
+                            username: "Browser Dev",
+                            discriminator: "0000",
+                            global_name: "Browser Developer"
+                        },
+                        access_token: "mock_token"
+                    });
+
                     setIsLoading(false);
                     return;
                 }
