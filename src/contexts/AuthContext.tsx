@@ -1,10 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, signInWithGoogle, signOutUser, db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useDiscord } from './DiscordContext';
+
+// Define a simple User type for our app
+interface SimpleUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: SimpleUser | null;
   idToken: string | null;
   playerData: any;
   loading: boolean;
@@ -17,85 +23,77 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [idToken, setIdToken] = useState<string | null>(null);
+  const [user, setUser] = useState<SimpleUser | null>(null);
   const [playerData, setPlayerData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const { auth: discordAuth } = useDiscord();
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        try {
-          const token = await currentUser.getIdToken();
-          setUser(currentUser);
-          setIdToken(token);
+    const initializeAuth = async () => {
+      // 1. Check for existing "Guest" or "Discord" session in localStorage
+      const storageKey = 'alphabee_user_identity';
+      const storedIdentity = localStorage.getItem(storageKey);
 
-          // Fetch user data from Firestore
-          const userDocRef = doc(db, "users", currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
+      let currentUser: SimpleUser;
 
-          if (userDoc.exists()) {
-            setPlayerData(userDoc.data());
-          } else {
-            // Create initial user doc if it doesn't exist
-            const initialData = {
-              email: currentUser.email,
-              createdAt: new Date().toISOString(),
-            };
-            await setDoc(userDocRef, initialData);
-            setPlayerData(initialData);
-          }
-
-          console.log('User logged in:', currentUser.uid);
-        } catch (error) {
-          console.error('Error loading user data:', error);
-        }
+      if (storedIdentity) {
+        currentUser = JSON.parse(storedIdentity);
       } else {
-        setUser(null);
-        setIdToken(null);
-        setPlayerData(null);
+        // Create a new random identity
+        currentUser = {
+          uid: `guest_${Math.random().toString(36).substring(2, 15)}`,
+          email: null,
+          displayName: 'Guest Player',
+          photoURL: null
+        };
+        localStorage.setItem(storageKey, JSON.stringify(currentUser));
       }
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, []);
+      // If we ever get real Discord data (via backend handshake), we would overwrite this.
+      // For now, this ensures we ALWAYS have a user, so saving works.
+      setUser(currentUser);
+
+      // Load their player data
+      const dataKey = `alphabee_user_${currentUser.uid}`;
+      const savedDataStr = localStorage.getItem(dataKey);
+      if (savedDataStr) {
+        setPlayerData(JSON.parse(savedDataStr));
+      } else {
+        const initialData = {
+          displayName: currentUser.displayName,
+          createdAt: new Date().toISOString(),
+        };
+        setPlayerData(initialData);
+      }
+
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, [discordAuth]);
 
   const login = async () => {
-    try {
-      setLoading(true);
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    // In this local-only / no-backend mode, "login" is automatic/persistent.
+    console.log("Login requested - already authenticated as local user.");
   };
 
   const logout = async () => {
-    try {
-      await signOutUser();
-      console.log('User logged out');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
-    }
+    // Clear local identity? Or just reload?
+    console.log('User logged out (simulated)');
   };
 
   const saveProgress = async (data: any) => {
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
+    if (!user) return;
 
     try {
-      // Allow generic saving to user profile if needed, though specific game saving 
-      // is handled in useGamePersistence. 
-      // This function might be used for other settings.
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, data, { merge: true });
-      setPlayerData((prev: any) => ({ ...prev, ...data }));
-      console.log('Progress saved!');
+      const storageKey = `alphabee_user_${user.uid}`;
+      const existingStr = localStorage.getItem(storageKey);
+      const existing = existingStr ? JSON.parse(existingStr) : {};
+      const newData = { ...existing, ...data };
+
+      localStorage.setItem(storageKey, JSON.stringify(newData));
+      setPlayerData(newData);
     } catch (error) {
       console.error('Save failed:', error);
       throw error;
@@ -109,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       user,
-      idToken,
+      idToken: "mock-token",
       playerData,
       loading,
       login,

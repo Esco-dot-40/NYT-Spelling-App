@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/firebase";
-import { collection, getDocs } from "firebase/firestore";
 
 interface GameHistory {
   game_date: string;
@@ -56,17 +54,26 @@ export default function History() {
       setError(null);
 
       try {
-        console.log("Fetching games for user:", user.uid);
-        const gamesRef = collection(db, "users", user.uid, "games");
-        const querySnapshot = await getDocs(gamesRef);
-
-        console.log("Found", querySnapshot.size, "games");
-
+        console.log("Fetching local games for user:", user.uid);
+        const prefix = `alphabee_game_${user.uid}_`;
         const games: GameHistory[] = [];
-        querySnapshot.forEach((doc) => {
-          console.log("Game doc:", doc.id, doc.data());
-          games.push(doc.data() as GameHistory);
-        });
+
+        // Iterate localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(prefix)) {
+            try {
+              const data = JSON.parse(localStorage.getItem(key) || "{}");
+              if (data && data.score !== undefined) {
+                games.push(data as GameHistory);
+              }
+            } catch (e) {
+              console.warn("Failed to parse game data for key:", key);
+            }
+          }
+        }
+
+        console.log("Found", games.length, "games");
 
         // Sort by timestamp (newest first), fallback to game_date
         games.sort((a, b) => {

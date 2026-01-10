@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+// import { supabase } from "@/integrations/supabase/client"; // Removed Supabase
 import { Trophy, Target, Flame, Calendar } from "lucide-react";
-
-const SESSION_KEY = "spelling-hive-session";
+import { useAuth } from "@/contexts/AuthContext";
 
 const getRank = (score: number, maxScore: number): string => {
   const percentage = (score / maxScore) * 100;
@@ -29,6 +28,7 @@ interface Stats {
 }
 
 export default function Statistics() {
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<Stats>({
     gamesPlayed: 0,
     averageScore: 0,
@@ -40,49 +40,44 @@ export default function Statistics() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const sessionId = localStorage.getItem(SESSION_KEY);
-      if (!sessionId) {
-        setLoading(false);
+      if (authLoading || !user) {
+        if (!authLoading) setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from("player_stats")
-          .select("*")
-          .eq("session_id", sessionId)
-          .order("game_date", { ascending: false });
+        const statsKey = `alphabee_stats_${user.uid}`;
+        // Also fetch all games to calculate average score
+        const prefix = `alphabee_game_${user.uid}_`;
+        let totalScore = 0;
+        let gameCount = 0;
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          const gamesPlayed = data.length;
-          const totalScore = data.reduce((sum, game) => sum + game.score, 0);
-          const averageScore = Math.round(totalScore / gamesPlayed);
-          
-          // Find best rank
-          let bestRankValue = "Beginner";
-          let bestPercentage = 0;
-          data.forEach((game) => {
-            // Assuming maxScore is roughly 500 for calculation
-            const percentage = (game.score / 500) * 100;
-            if (percentage > bestPercentage) {
-              bestPercentage = percentage;
-              bestRankValue = getRank(game.score, 500);
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(prefix)) {
+            try {
+              const data = JSON.parse(localStorage.getItem(key) || "{}");
+              if (data && data.score !== undefined) {
+                totalScore += data.score;
+                gameCount++;
+              }
+            } catch (e) {
+              // ignore
             }
-          });
-
-          // Get streak info from most recent game
-          const latestGame = data[0];
-          
-          setStats({
-            gamesPlayed,
-            averageScore,
-            bestRank: latestGame.best_rank || bestRankValue,
-            currentStreak: latestGame.current_streak || 0,
-            bestStreak: latestGame.best_streak || 0,
-          });
+          }
         }
+
+        const statsStr = localStorage.getItem(statsKey);
+        const storedStats = statsStr ? JSON.parse(statsStr) : {};
+
+        setStats({
+          gamesPlayed: storedStats.games_played || gameCount || 0,
+          averageScore: gameCount > 0 ? Math.round(totalScore / gameCount) : 0,
+          bestRank: storedStats.best_rank || "Beginner",
+          currentStreak: storedStats.current_streak || 0,
+          bestStreak: storedStats.best_streak || 0,
+        });
+
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
@@ -91,7 +86,7 @@ export default function Statistics() {
     };
 
     fetchStats();
-  }, []);
+  }, [user, authLoading]);
 
   const statCards = [
     {
@@ -126,7 +121,7 @@ export default function Statistics() {
     },
   ];
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-game-bg flex items-center justify-center">
         <div className="text-xl text-muted-foreground">Loading statistics...</div>

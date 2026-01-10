@@ -1,33 +1,38 @@
 import { useState, useCallback } from "react";
-import { db } from "@/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useGamePersistence = () => {
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Helper to get storage key
+  const getStorageKey = (uid: string, puzzleId: string) => `alphabee_game_${uid}_${puzzleId}`;
+  const getStatsKey = (uid: string) => `alphabee_stats_${uid}`;
+
   const loadProgress = useCallback(async (puzzleId: string) => {
+    // If no user, we can't load user-specific data yet. 
+    // Ideally we could support "guest" play with a generic ID, but the app flow expects a user for now.
     if (!user) {
       setIsLoaded(true);
       return null;
     }
 
     try {
-      const gameRef = doc(db, "users", user.uid, "games", puzzleId);
-      const gameSnap = await getDoc(gameRef);
+      const storageKey = getStorageKey(user.uid, puzzleId);
+      const savedDataString = localStorage.getItem(storageKey);
 
-      if (gameSnap.exists()) {
+      if (savedDataString) {
+        const savedData = JSON.parse(savedDataString);
         setIsLoaded(true);
-        return gameSnap.data();
+        return savedData;
       }
 
       setIsLoaded(true);
       return null;
     } catch (error: any) {
       console.error('Error loading progress:', error);
-      toast.error("Failed to load game", { description: error.message });
+      // Don't toast on load failure usually, just log
       setIsLoaded(true);
       return null;
     }
@@ -38,6 +43,8 @@ export const useGamePersistence = () => {
 
     try {
       const today = new Date().toISOString().split('T')[0];
+      const storageKey = getStorageKey(user.uid, puzzleId);
+      const statsKey = getStatsKey(user.uid);
 
       // Calculate rank
       const getRank = (score: number, maxScore: number): string => {
@@ -58,15 +65,28 @@ export const useGamePersistence = () => {
       const currentRank = getRank(score, maxScore);
 
       // Get user stats for streak
-      const statsRef = doc(db, "users", user.uid, "stats", "summary");
-      const statsSnap = await getDoc(statsRef);
-      const stats = statsSnap.exists() ? statsSnap.data() : { current_streak: 0, best_streak: 0, last_played_date: null, best_rank: "Beginner", games_played: 0 };
+      const statsJson = localStorage.getItem(statsKey);
+      const stats = statsJson ? JSON.parse(statsJson) : {
+        current_streak: 0,
+        best_streak: 0,
+        last_played_date: null,
+        best_rank: "Beginner",
+        games_played: 0
+      };
 
       let currentStreak = stats.current_streak || 0;
       let bestStreak = stats.best_streak || 0;
       let bestRank = stats.best_rank || "Beginner";
       let gamesPlayed = stats.games_played || 0;
 
+      // Check current rank vs best rank helper
+      const rankValue = (rank: string) => {
+        const ranks = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee", "Perfect!"];
+        return ranks.indexOf(rank);
+      };
+
+      // Update streaks logic
+      // Note: "last_played_date" tracks the last day they played *any* game
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -74,18 +94,18 @@ export const useGamePersistence = () => {
       if (stats.last_played_date !== today) {
         if (stats.last_played_date === yesterdayStr) {
           currentStreak += 1;
-        } else {
+        } else if (stats.last_played_date && stats.last_played_date < yesterdayStr) {
+          // Reset streak if we missed a day
+          currentStreak = 1;
+        } else if (!stats.last_played_date) {
+          // First game ever
           currentStreak = 1;
         }
+        // If playing multiple times today, streak doesn't increase, but also doesn't reset
         gamesPlayed += 1;
       }
 
       bestStreak = Math.max(currentStreak, bestStreak);
-
-      const rankValue = (rank: string) => {
-        const ranks = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee", "Perfect!"];
-        return ranks.indexOf(rank);
-      };
 
       if (rankValue(currentRank) > rankValue(bestRank)) {
         bestRank = currentRank;
@@ -95,28 +115,26 @@ export const useGamePersistence = () => {
         score,
         words_found: wordsFound,
         pangrams_found: pangramsFound,
-        game_date: today, // Keep tracking the real date of play
+        game_date: today,
         puzzle_id: puzzleId,
         rank: currentRank,
         timestamp: new Date().toISOString()
       };
 
-      // Save using the specific puzzleId
-      await setDoc(doc(db, "users", user.uid, "games", puzzleId), gameData);
+      // Save Game
+      localStorage.setItem(storageKey, JSON.stringify(gameData));
 
-      await setDoc(statsRef, {
+      // Save Stats
+      localStorage.setItem(statsKey, JSON.stringify({
         current_streak: currentStreak,
         best_streak: bestStreak,
         last_played_date: today,
         best_rank: bestRank,
         games_played: gamesPlayed
-      }, { merge: true });
+      }));
 
     } catch (error: any) {
       console.error('Error saving progress:', error);
-      if (error.code === 'permission-denied') {
-        toast.error("Saving Failed", { description: "Check Database Rules" });
-      }
     }
   }, [user]);
 
