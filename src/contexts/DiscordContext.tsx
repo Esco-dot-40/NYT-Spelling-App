@@ -90,7 +90,12 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                             const response = await fetch('/api/token', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ code }),
+                                body: JSON.stringify({
+                                    code,
+                                    // Send current origin (e.g. https://spell.velarixsolutions.nl) to backend
+                                    // to use as the redirect_uri in the token exchange.
+                                    redirect_uri: window.location.origin
+                                }),
                             });
 
                             if (response.ok) {
@@ -99,6 +104,10 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                                 setAuth({ ...data, code });
                             } else {
                                 console.warn("Backend token exchange failed (possibly dev mode), continue with code only.");
+                                try {
+                                    const errorData = await response.json();
+                                    console.error("Exchange debug info:", errorData);
+                                } catch (e) { }
                                 setAuth({ code });
                             }
                         } catch (e) {
