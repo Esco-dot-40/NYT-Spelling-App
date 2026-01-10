@@ -25,9 +25,10 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Primary Setup Effect
     useEffect(() => {
         const setupDiscord = async () => {
-            // Force timeout to ensure we never get stuck on "Connecting..."
+            // Force timeout race condition in logic
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Connection timeout")), 5000)
             );
@@ -87,6 +88,22 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         setupDiscord();
     }, []);
+
+    // Safety Valve: Force loading to finish after 6 seconds max
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isLoading) {
+                console.warn("Discord Context: Force finishing loading state due to timeout.");
+                setIsLoading(false);
+                // If we forced it and have no SDK, set an error so user knows why it might be broken
+                if (!discordSdk) {
+                    // Only set error if not already set, to avoid overwriting specific errors
+                    setError(prev => prev || "Connection timed out - loaded in offline mode");
+                }
+            }
+        }, 6000);
+        return () => clearTimeout(timer);
+    }, [isLoading, discordSdk]);
 
     return (
         <DiscordContext.Provider value={{ discordSdk, auth, isLoading, error }}>
