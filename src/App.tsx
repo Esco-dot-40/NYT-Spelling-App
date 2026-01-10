@@ -33,7 +33,7 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
 
   if (isLoading && !forceShow) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground">
+      <div className="min-h-screen flex flex-col items-center justify-center text-foreground z-50 relative">
         <h2 className="text-2xl font-bold mb-4">SpellOrFail</h2>
         <p className="text-muted-foreground animate-pulse">Connecting to Discord...</p>
       </div>
@@ -42,7 +42,7 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
 
   if (error && window.location.search.includes('frame_id') && !forceShow) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-destructive p-4 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center text-destructive p-4 text-center z-50 relative">
         <h2 className="text-2xl font-bold mb-4">Connection Failed</h2>
         <p>{error}</p>
         <p className="text-sm mt-4 text-muted-foreground">Try reloading the activity.</p>
@@ -56,7 +56,7 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return <>{children}</>;
+  return <div id="ui-content-wrapper" className="transition-transform duration-300 origin-top">{children}</div>;
 };
 
 const App = () => {
@@ -72,15 +72,19 @@ const App = () => {
 
   return (
     <>
-      {showLoading && <LoadingScreen />}
+      <EffectsOverlay /> {/* Background stays OUTSIDE the zoomed wrapper */}
+
+      {showLoading && <LoadingScreen />} {/* Loading Screen stays OUTSIDE the zoomed wrapper */}
+
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <DiscordProvider>
             <AuthProvider>
               <SoundProvider>
-                <EffectsOverlay />
                 <Toaster />
                 <Sonner />
+
+                {/* The Wrapper controls the zoom of the UI */}
                 <DiscordLoadingWrapper>
                   <BrowserRouter>
                     <Routes>
@@ -110,6 +114,7 @@ const App = () => {
                     </Routes>
                   </BrowserRouter>
                 </DiscordLoadingWrapper>
+
               </SoundProvider>
             </AuthProvider>
           </DiscordProvider>

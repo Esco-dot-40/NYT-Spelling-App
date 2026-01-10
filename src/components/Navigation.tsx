@@ -22,20 +22,14 @@ export const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Apply zoom on mount and change
+  // Apply zoom to #ui-content-wrapper instead of #root
   useEffect(() => {
-    // Apply scale to root if possible, or body
-    // Using simple CSS variable or direct style on root is safest for React
-    const root = document.getElementById('root');
-    if (root) {
-      // We use transform scale because 'zoom' property is non-standard, though powerful.
-      // However, 'zoom' works great in Chrome/Edge. Let's try CSS var first for cleaner implementation if we had one.
-      // For now, let's stick to the user request "zoom it out".
-      // Setting style.zoom is the most direct way for "browser-like" zoom behavior in Webkit.
-      root.style.transform = `scale(${zoomLevel})`;
-      root.style.transformOrigin = 'top center';
-      root.style.width = `${100 / zoomLevel}%`; // Compensation for width
-      root.style.height = `${100 / zoomLevel}%`;
+    const wrapper = document.getElementById('ui-content-wrapper');
+    if (wrapper) {
+      wrapper.style.transform = `scale(${zoomLevel})`;
+      // Increase width/height to compensate for scale down so it still covers the area
+      wrapper.style.width = `${100 / zoomLevel}%`;
+      wrapper.style.minHeight = `${100 / zoomLevel}vh`;
     }
   }, [zoomLevel]);
 
