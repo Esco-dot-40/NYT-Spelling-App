@@ -123,8 +123,8 @@ export default function Statistics() {
   }
 
   return (
-    <div className="min-h-screen bg-game-bg">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-game-bg pt-24 pb-12">
+      <div className="max-w-6xl mx-auto px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             {user?.displayName ? `${user.displayName}'s Statistics` : 'Your Statistics'}
@@ -136,16 +136,16 @@ export default function Statistics() {
             No games played yet. Start playing to see your statistics!
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             {statCards.map((stat, index) => (
-              <Card key={index} className="p-6 shadow-[var(--velarix-glow)] hover:scale-105 transition-transform">
+              <Card key={index} className="p-6 bg-black/60 backdrop-blur-md border border-white/10 shadow-lg hover:shadow-[var(--velarix-glow)] hover:scale-105 transition-all min-w-[200px] flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color}`}>
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-muted-foreground mb-2">{stat.title}</h3>
-                <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value || 0}</p>
               </Card>
             ))}
           </div>
