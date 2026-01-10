@@ -3,7 +3,7 @@ import gsap from 'gsap';
 
 interface Particle {
     id: string;
-    elem: createjs.Shape;
+    elem: any; // Using any for CreateJS shapes from global scope
     fromX: number;
     toX: number;
     areaHeight: number;
@@ -32,14 +32,14 @@ interface Light {
     offsetX: number;
     offsetY: number;
     color: string;
-    elem?: createjs.Shape;
+    elem?: any;
     initX?: number;
     initY?: number;
 }
 
 const ParticleBackground = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const particleArray = useRef<createjs.Shape[]>([]);
+    const particleArray = useRef<any[]>([]);
     const lights = useRef<Light[]>([
         { ellipseWidth: 400, ellipseHeight: 100, alpha: 0.6, offsetX: 0, offsetY: 0, color: "#6ac6e8" },
         { ellipseWidth: 350, ellipseHeight: 250, alpha: 0.3, offsetX: -50, offsetY: 0, color: "#54d5e8" },
@@ -77,26 +77,19 @@ const ParticleBackground = () => {
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        // Dynamically import easeljs since it's a global lib usually
-        // Note: we installed easeljs but it might not be fully TS friendly without strict shim.
-        // We will try standard import or use window.createjs if loaded via script.
-        // Assuming 'import "easeljs"' works after npm install.
-
-        let stage: createjs.Stage;
+        let stage: any;
         let totalWidth: number;
         let totalHeight: number;
         let compositeStyle = "lighter";
 
-        const init = async () => {
-            // @ts-ignore
-            if (typeof window.createjs === 'undefined') {
-                await import('easeljs');
-            }
+        // Poll for CreateJS from window
+        const init = () => {
             // @ts-ignore
             const createjs = window.createjs;
 
             if (!createjs) {
-                console.error("CreateJS not ready");
+                // Try again in 100ms
+                setTimeout(init, 100);
                 return;
             }
 
@@ -115,7 +108,7 @@ const ParticleBackground = () => {
 
             // Draw Bg Light
             const drawBgLight = () => {
-                let light: createjs.Shape;
+                let light: any;
                 let bounds;
                 let blurFilter;
                 for (var i = 0, len = lights.current.length; i < len; i++) {
@@ -176,9 +169,12 @@ const ParticleBackground = () => {
 
             const drawParticles = () => {
                 let blurFilter;
+                // @ts-ignore
+                const createjs = window.createjs;
+
                 for (var i = 0, len = particleSettings.current.length; i < len; i++) {
                     var ball = particleSettings.current[i];
-                    ball.toX = totalWidth; // Update width
+                    ball.toX = totalWidth;
 
                     var circle;
                     for (var s = 0; s < ball.num; s++) {
@@ -219,12 +215,13 @@ const ParticleBackground = () => {
             createjs.Ticker.addEventListener("tick", () => stage.update());
         };
 
+        // Start initialization attempt
         init();
 
         return () => {
             // Cleanup if needed
         }
-    }, []); // Empty deps to run once
+    }, []);
 
     return (
         <canvas
