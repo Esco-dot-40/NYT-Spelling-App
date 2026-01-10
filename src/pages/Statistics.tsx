@@ -213,8 +213,7 @@ function LeaderboardTable({ mode, guildId }: { mode: 'global' | 'server', guildI
   }, [mode, guildId]);
 
   if (loading) return <div className="text-center text-muted-foreground py-8">Loading leaders...</div>;
-
-  if (leaders.length === 0) {
+  if (!leaders || !Array.isArray(leaders) || leaders.length === 0) {
     return (
       <Card className="p-8 text-center text-muted-foreground">
         {mode === 'server'
@@ -245,11 +244,11 @@ function LeaderboardTable({ mode, guildId }: { mode: 'global' | 'server', guildI
                   {i === 2 && <Trophy className="w-4 h-4 text-amber-600" />}
                   <span className="font-mono text-muted-foreground">#{i + 1}</span>
                 </td>
-                <td className="p-4 font-medium text-primary">{player.display_name || "Unknown"}</td>
-                <td className="p-4">{player.games_played}</td>
+                <td className="p-4 font-medium text-primary">{player?.display_name || "Unknown"}</td>
+                <td className="p-4">{player?.games_played || 0}</td>
                 <td className="p-4 flex items-center gap-1">
-                  {player.current_streak > 0 && <Flame className="w-3 h-3 text-orange-500" />}
-                  {player.current_streak}
+                  {(player?.current_streak || 0) > 0 && <Flame className="w-3 h-3 text-orange-500" />}
+                  {player?.current_streak || 0}
                 </td>
               </tr>
             ))}
