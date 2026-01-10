@@ -195,7 +195,8 @@ export const GameBoard = () => {
   }, [currentWord, playClick]); // Added playClick to dependencies
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center justify-start p-4 md:p-8 relative z-10">
+    // Added pb-32 for extra bottom spacing
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-start p-4 md:p-8 relative z-10 pb-32">
       <div className="w-full max-w-6xl">
         <header className="text-center mb-8">
           <p className="text-muted-foreground text-lg">Daily Word Puzzle</p>
