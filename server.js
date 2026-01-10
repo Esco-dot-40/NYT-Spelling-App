@@ -94,18 +94,17 @@ app.post('/api/token', async (req, res) => {
     try {
         // 1. Exchange Code for Token
 
-        // Determine request origin to set the correct redirect_uri
+        // Determine request origin or use provided redirect_uri
         const origin = req.headers.origin;
-        let redirect_uri = 'http://localhost:5173'; // Default for local
+        let redirect_uri = req.body.redirect_uri || 'http://localhost:5173'; // Prefer client provided
 
-        if (origin) {
-            if (origin.includes('localhost')) {
-                redirect_uri = 'http://localhost:5173';
-            } else if (origin.includes('spell.velarixsolutions.nl')) {
+        if (!req.body.redirect_uri && origin) {
+            if (origin.includes('spell.velarixsolutions.nl')) {
                 // Ensure no trailing slash mismatch, typical standard is no trailing slash for origins
                 redirect_uri = 'https://spell.velarixsolutions.nl';
+            } else if (origin.includes('localhost')) {
+                redirect_uri = 'http://localhost:5173';
             } else {
-                // Fallback to the origin itself if it's some other deployment
                 redirect_uri = origin;
             }
         }
