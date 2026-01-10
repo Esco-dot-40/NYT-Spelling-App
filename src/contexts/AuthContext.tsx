@@ -27,10 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [playerData, setPlayerData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const { auth: discordAuth } = useDiscord();
+  // Get loading state from Discord context to prevent premature Guest fallback
+  const { auth: discordAuth, isLoading: isDiscordLoading } = useDiscord();
 
   useEffect(() => {
     const initializeAuth = async () => {
+      // 0. Wait for Discord SDK to initialize to avoid race conditions
+      if (isDiscordLoading) return;
+
       // 1. Check if we have a REAL Discord authenticated user from our backend exchange
       if (discordAuth?.user) {
         const discordUser = discordAuth.user;
@@ -92,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initializeAuth();
-  }, [discordAuth]); // Re-run when discordAuth changes (i.e. token exchange completes)
+  }, [discordAuth, isDiscordLoading]); // Re-run when loading finishes or auth changes
 
   const login = async () => {
     // In this local-only / no-backend mode, "login" is automatic/persistent.
@@ -130,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user,
       idToken: "mock-token",
       playerData,
-      loading,
+      loading, // usage of internal loading state is correct
       login,
       logout,
       saveProgress,
