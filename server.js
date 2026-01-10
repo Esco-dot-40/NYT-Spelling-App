@@ -107,12 +107,6 @@ app.post('/api/progress', async (req, res) => {
         timestamp = NOW();
     `, [uid, puzzleId, score, words_found, pangrams_found, rank, game_date]);
 
-        // Update Stats (Simplistic logic for demo)
-        // In a real app, you'd do precise date math for streaks here or in the client
-        // For now, we'll let the client calculate streak vals and just store them blindly if provided,
-        // OR we can just store the raw games and derive stats on read.
-        // Let's rely on the client pushing updated stats to a separate endpoint for layout simplicity.
-
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -171,7 +165,7 @@ app.get('/api/history/:uid', async (req, res) => {
 
 
 // Catch-all for SPA
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
