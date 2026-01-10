@@ -69,7 +69,10 @@ if (process.env.DATABASE_URL) {
 // OAuth Token Exchange & User Sync
 app.post('/api/token', async (req, res) => {
     const { code } = req.body;
-    if (!code) return res.status(400).json({ error: 'No code provided' });
+    if (!code) {
+        console.error("Token Exchange Error: No code provided in request body.");
+        return res.status(400).json({ error: 'No code provided' });
+    }
 
     // Fallback for dev/mock mode
     if (code === 'mock_code') {
