@@ -195,7 +195,73 @@ export default function Statistics() {
             ))}
           </div>
         )}
+
+        {/* Leaderboard Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-center mb-6 text-white">Global Leaderboard</h2>
+          <LeaderboardTable />
+        </div>
+
       </div>
     </div>
+  );
+}
+
+function LeaderboardTable() {
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/leaderboard')
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) setLeaders(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load leaderboard", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="text-center text-muted-foreground">Loading leaders...</div>;
+  if (leaders.length === 0) return <div className="text-center text-muted-foreground">No global stats yet. Be the first!</div>;
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-muted/50 text-left">
+              <th className="p-4 font-semibold text-foreground">Rank</th>
+              <th className="p-4 font-semibold text-foreground">Player</th>
+              <th className="p-4 font-semibold text-foreground">Games</th>
+              <th className="p-4 font-semibold text-foreground">Streak</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leaders.map((player, i) => (
+              <tr key={i} className="border-t border-border/50 hover:bg-muted/20">
+                <td className="p-4 flex items-center gap-2">
+                  {i === 0 && <Trophy className="w-4 h-4 text-yellow-500" />}
+                  {i === 1 && <Trophy className="w-4 h-4 text-gray-400" />}
+                  {i === 2 && <Trophy className="w-4 h-4 text-amber-600" />}
+                  <span className="font-mono text-muted-foreground">#{i + 1}</span>
+                </td>
+                <td className="p-4 font-medium text-primary">{player.display_name || "Unknown"}</td>
+                <td className="p-4">{player.games_played}</td>
+                <td className="p-4 flex items-center gap-1">
+                  {player.current_streak > 0 && <Flame className="w-3 h-3 text-orange-500" />}
+                  {player.current_streak}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
