@@ -34,7 +34,7 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
   if (isLoading && !forceShow) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground">
-        <h2 className="text-2xl font-bold mb-4">Daily Spell</h2>
+        <h2 className="text-2xl font-bold mb-4">SpellOrFail</h2>
         <p className="text-muted-foreground animate-pulse">Connecting to Discord...</p>
       </div>
     );
