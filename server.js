@@ -93,16 +93,31 @@ app.post('/api/token', async (req, res) => {
 
     try {
         // 1. Exchange Code for Token
+
+        // Determine request origin to set the correct redirect_uri
+        const origin = req.headers.origin;
+        let redirect_uri = 'http://localhost:5173'; // Default for local
+
+        if (origin) {
+            if (origin.includes('localhost')) {
+                redirect_uri = 'http://localhost:5173';
+            } else if (origin.includes('spell.velarixsolutions.nl')) {
+                // Ensure no trailing slash mismatch, typical standard is no trailing slash for origins
+                redirect_uri = 'https://spell.velarixsolutions.nl';
+            } else {
+                // Fallback to the origin itself if it's some other deployment
+                redirect_uri = origin;
+            }
+        }
+
+        console.log(`[OAuth] Using redirect_uri: ${redirect_uri}`);
+
         const params = new URLSearchParams({
             client_id: process.env.DISCORD_CLIENT_ID,
             client_secret: process.env.DISCORD_CLIENT_SECRET,
             grant_type: 'authorization_code',
             code,
-            // Redirect URI is required by Discord API even if not used for redirect in embedded apps
-            // It just needs to match one of the redirect URIs in the developer portal
-            // For embedded apps, it's often not checked strictly if using 'frame' but good to have.
-            // We use a dummy local one or the fetch origin.
-            redirect_uri: req.headers.origin || 'http://localhost:5173'
+            redirect_uri
         });
 
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
@@ -132,7 +147,7 @@ app.post('/api/token', async (req, res) => {
         // 3. Upsert User into DB with real name (Prefer Global Name aka Display Name)
         await pool.query(
             'INSERT INTO users (uid, display_name) VALUES ($1, $2) ON CONFLICT (uid) DO UPDATE SET display_name = $2',
-            [userData.id, userData.global_name || userData.username]
+            [userData.id, userData.username] // userData.username is the Discord handle
         );
 
         res.json({ access_token: tokenData.access_token, user: userData });
