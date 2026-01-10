@@ -111,6 +111,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, [discordAuth, isDiscordLoading]); // Re-run when loading finishes or auth changes
 
+  // STRONG ENFORCEMENT: If we are in Discord, we CANNOT be "Guest Player".
+  // If we somehow loaded a Guest identity (e.g. from race condition or stale storage), NUKE IT.
+  useEffect(() => {
+    const isDiscordMode = window.location.search.includes('frame_id');
+    if (isDiscordMode && user?.displayName === 'Guest Player') {
+      console.warn("Detected Guest Session in Discord Mode - Purging...");
+      localStorage.removeItem('alphabee_user_identity');
+      setUser(null); // Force reset
+    }
+  }, [user]);
+
   const login = async () => {
     // In this local-only / no-backend mode, "login" is automatic/persistent.
     console.log("Login requested - already authenticated as local user.");

@@ -100,6 +100,11 @@ const Index = () => {
         </div>
 
         <GameBoard />
+
+        {/* Version Indicator for Debugging */}
+        <div className="text-center py-4 text-xs text-muted-foreground/30 font-mono">
+          v1.2.0 - Discord Native
+        </div>
       </div>
     </>
   );
