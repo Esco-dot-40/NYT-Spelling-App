@@ -64,6 +64,20 @@ const initDB = async () => {
         last_played_date DATE,
         guild_id VARCHAR(255)
       );
+
+      CREATE TABLE IF NOT EXISTS visitor_logs (
+        id SERIAL PRIMARY KEY,
+        uid VARCHAR(255),
+        ip VARCHAR(50),
+        city VARCHAR(100),
+        country VARCHAR(100),
+        lat FLOAT,
+        lng FLOAT,
+        platform VARCHAR(50),
+        user_agent TEXT,
+        path VARCHAR(255),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
         // Manual Migration for existing tables
@@ -383,6 +397,65 @@ app.get('/api/history/:uid', async (req, res) => {
             [req.params.uid]
         );
         res.json(result.rows[0] || {});
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'DB Error' });
+    }
+});
+
+
+// --- Analytics Endpoints ---
+
+// Log Visit
+app.post('/api/analytics/visit', async (req, res) => {
+    const { uid, ip, city, country, lat, lng, platform, user_agent, path } = req.body;
+    try {
+        await pool.query(`
+            INSERT INTO visitor_logs (uid, ip, city, country, lat, lng, platform, user_agent, path)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, [uid, ip, city, country, lat, lng, platform, user_agent, path]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Analytics Log Error:", err);
+        res.json({ success: false });
+    }
+});
+
+// Get Analytics Summary
+app.get('/api/analytics/summary', async (req, res) => {
+    try {
+        const totalRes = await pool.query('SELECT COUNT(*) FROM visitor_logs');
+        const total_visits = parseInt(totalRes.rows[0].count);
+
+        const uniqueRes = await pool.query('SELECT COUNT(DISTINCT ip) FROM visitor_logs');
+        const unique_visitors = parseInt(uniqueRes.rows[0].count);
+
+        const platformRes = await pool.query(`
+            SELECT platform, COUNT(*) as count 
+            FROM visitor_logs 
+            GROUP BY platform
+        `);
+
+        const recentRes = await pool.query(`
+            SELECT * FROM visitor_logs 
+            ORDER BY timestamp DESC 
+            LIMIT 50
+        `);
+
+        const geoRes = await pool.query(`
+            SELECT lat, lng, city, country, COUNT(*) as count
+            FROM visitor_logs
+            WHERE lat IS NOT NULL AND lng IS NOT NULL
+            GROUP BY lat, lng, city, country
+        `);
+
+        res.json({
+            total_visits,
+            unique_visitors,
+            platforms: platformRes.rows,
+            recent_visits: recentRes.rows,
+            geo_data: geoRes.rows
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'DB Error' });

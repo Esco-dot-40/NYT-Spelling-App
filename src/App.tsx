@@ -12,9 +12,17 @@ import Statistics from "./pages/Statistics";
 import History from "./pages/History";
 import Suggestions from "./pages/Suggestions";
 import NotFound from "./pages/NotFound";
+import Analytics from "./pages/Analytics";
 import EffectsOverlay from "./components/EffectsOverlay";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useState, useEffect } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
+
+// Analytics Tracker Component
+const AnalyticsTracker = () => {
+  useAnalytics();
+  return null;
+};
 
 const queryClient = new QueryClient();
 
@@ -107,8 +115,10 @@ const App = () => {
                           <Suggestions />
                         </>
                       } />
+                      <Route path="/analytics" element={<Analytics />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <AnalyticsTracker />
                   </BrowserRouter>
                 </DiscordLoadingWrapper>
 
