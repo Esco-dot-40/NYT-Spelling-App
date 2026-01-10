@@ -195,20 +195,20 @@ export const GameBoard = () => {
   }, [currentWord, playClick]); // Added playClick to dependencies
 
   return (
-    // Added pb-32 for extra bottom spacing
-    <div className="min-h-screen bg-transparent flex flex-col items-center justify-start p-4 md:p-8 relative z-10 pb-32">
+    // Compacted padding and spacing for smaller screens
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-start p-2 md:p-4 relative z-10 pb-20">
       <div className="w-full max-w-6xl">
-        <header className="text-center mb-8">
-          <p className="text-muted-foreground text-lg">Daily Word Puzzle</p>
-          <div className="mt-4">
+        <header className="text-center mb-2">
+          <p className="text-muted-foreground text-sm font-medium">Daily Word Puzzle</p>
+          <div className="mt-1">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 h-7 text-xs"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-3 h-3" />
                   New Puzzle
                 </Button>
               </AlertDialogTrigger>
@@ -231,23 +231,23 @@ export const GameBoard = () => {
           </div>
         </header>
 
-        <div className="grid md:grid-cols-[1fr_400px] gap-8">
-          <div className="flex flex-col items-center gap-6">
+        <div className="grid md:grid-cols-[1fr_400px] gap-4">
+          <div className="flex flex-col items-center gap-3">
             <ScorePanel
               score={score}
               maxScore={puzzle.maxScore}
               foundWords={foundWords.length}
             />
 
-            <div className={`w-full max-w-md bg-card/80 backdrop-blur-sm rounded-lg p-4 mb-4 ${isShaking ? 'animate-shake' : ''}`}>
-              <div className="text-center text-2xl md:text-3xl font-bold text-game-text min-h-[50px] flex items-center justify-center uppercase border-b-2 border-border pb-4">
+            <div className={`w-full max-w-md bg-card/80 backdrop-blur-sm rounded-lg p-2 mb-2 ${isShaking ? 'animate-shake' : ''}`}>
+              <div className="text-center text-2xl font-bold text-game-text min-h-[40px] flex items-center justify-center uppercase border-b-2 border-border pb-2">
                 {currentWord || (
-                  <span className="text-muted-foreground">Type or click letters</span>
+                  <span className="text-muted-foreground text-sm">Type or click letters</span>
                 )}
               </div>
             </div>
 
-            <div className="relative w-full max-w-md h-[300px] md:h-[360px] flex items-center justify-center">
+            <div className="relative w-full max-w-md h-[250px] md:h-[280px] flex items-center justify-center">
               {/* Center hexagon */}
               <div className="absolute">
                 <LetterHex
@@ -261,7 +261,7 @@ export const GameBoard = () => {
               {/* Outer hexagons */}
               {outerLetters.map((letter, index) => {
                 const angle = (index * 60 - 90) * (Math.PI / 180);
-                const radius = 85;
+                const radius = 75; // Reduced radius for tighter packing
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
 
