@@ -77,7 +77,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                             client_id: DISCORD_CLIENT_ID,
                             response_type: "code",
                             state: "",
-                            prompt: "consent", // Force prompt to ensure we get 'identify' scope
+                            prompt: "none",
                             scope: [
                                 "identify",
                                 "guilds",
