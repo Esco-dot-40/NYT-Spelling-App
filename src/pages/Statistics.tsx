@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Trophy, Target, Flame, Calendar, Users, Globe } from "lucide-react";
+import { Trophy, Target, Flame, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDiscord } from "@/contexts/DiscordContext";
 
@@ -163,7 +163,7 @@ export default function Statistics() {
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${leaderboardMode === 'global' ? 'bg-primary text-primary-foreground shadow' : 'hover:bg-muted/50 text-muted-foreground'
                   }`}
               >
-                <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> Global</span>
+                <span className="flex items-center gap-2"> Global</span>
               </button>
               <button
                 onClick={() => isInGuild && setLeaderboardMode('server')}
@@ -172,7 +172,7 @@ export default function Statistics() {
                   } ${!isInGuild ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={!isInGuild ? "Launch in a Discord Server to see Server Leaderboard" : ""}
               >
-                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> Server</span>
+                <span className="flex items-center gap-2"> Server</span>
               </button>
             </div>
           </div>
