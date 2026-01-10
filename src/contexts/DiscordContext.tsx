@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DiscordSDK, DiscordSDKMock } from "@discord/embedded-app-sdk";
 
-const DISCORD_CLIENT_ID = "1451743881854062685";
+const DISCORD_CLIENT_ID = "1455079703940694081";
 
 interface DiscordContextType {
     discordSdk: DiscordSDK | DiscordSDKMock | null;
