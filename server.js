@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Railway/Heroku/Vercel)
 const PORT = process.env.PORT || 8080;
 
 // Database Connection
@@ -102,16 +103,27 @@ app.post('/api/token', async (req, res) => {
 
         // Determine request origin or use provided redirect_uri
         const origin = req.headers.origin;
-        let redirect_uri = req.body.redirect_uri || 'http://localhost:5173'; // Prefer client provided
+        let redirect_uri = process.env.PUBLIC_URL || req.body.redirect_uri;
 
-        if (!req.body.redirect_uri && origin) {
-            if (origin.includes('spell.velarixsolutions.nl')) {
-                // Ensure no trailing slash mismatch, typical standard is no trailing slash for origins
-                redirect_uri = 'https://spell.velarixsolutions.nl';
-            } else if (origin.includes('localhost')) {
-                redirect_uri = 'http://localhost:5173';
-            } else {
+        // Smart Fallback: If no PUBLIC_URL, try to guess from the SERVER'S host
+        // This is better than 'origin' because 'origin' might be the Discord iframe (discordsays.com)
+        // whereas 'host' is this backend app (e.g. app.railway.app), which is what we invited.
+        if (!redirect_uri) {
+            const forwardedHost = req.headers['x-forwarded-host'];
+            // Handle comma-separated hosts (e.g. "client, proxy1, proxy2") - take the first one (client)
+            const rawHost = forwardedHost || req.headers.host;
+            const host = rawHost ? rawHost.split(',')[0].trim() : null;
+
+            const proto = req.headers['x-forwarded-proto'] || 'http';
+
+            if (host && !host.includes('localhost')) {
+                redirect_uri = `${proto.includes('https') ? 'https' : 'http'}://${host}`;
+                console.log(`[OAuth] Inferred redirect_uri from Host: ${redirect_uri}`);
+            } else if (origin) {
+                // Fallback to origin (mainly for localhost dev)
                 redirect_uri = origin;
+            } else {
+                redirect_uri = 'http://localhost:5173';
             }
         }
 
@@ -135,11 +147,12 @@ app.post('/api/token', async (req, res) => {
 
         if (!tokenData.access_token) {
             console.error("OAuth Token Error:", tokenData);
-            // Return the specific error from Discord to help debug (e.g. invalid_redirect_uri)
+            // Return failure with instructions
             return res.status(400).json({
-                error: 'Failed to get access token from Discord',
+                error: 'Discord OAuth Failed',
                 details: tokenData,
-                used_redirect_uri: params.get('redirect_uri')
+                current_redirect_uri: redirect_uri, // Tell fe what we used
+                message: "Please ensure this Redirect URI is added to your Discord Developer Portal."
             });
         }
 
@@ -221,7 +234,88 @@ app.post('/api/progress', async (req, res) => {
         timestamp = NOW();
     `, [uid, puzzleId, score, words_found, pangrams_found, rank, game_date]);
 
-        res.json({ success: true });
+        // --- Post-Save Stats Aggregation ---
+        // Fetch all games for this user to calculate streaks and totals
+        const gamesRes = await pool.query(
+            'SELECT game_date, rank, score FROM games WHERE user_uid = $1 ORDER BY game_date ASC',
+            [uid]
+        );
+        const games = gamesRes.rows;
+
+        const games_played = games.length;
+
+        // Calculate Streaks
+        let current_streak = 0;
+        let best_streak = 0;
+        let temp_streak = 0;
+        let last_date = null;
+
+        // Simple streak calculation (dates are strings or objects)
+        games.forEach(g => {
+            const d = new Date(g.game_date);
+            // Normalize to YYYY-MM-DD
+            const dateStr = d.toISOString().split('T')[0];
+
+            if (!last_date) {
+                temp_streak = 1;
+            } else {
+                const prev = new Date(last_date);
+                const diffTime = Math.abs(d - prev);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) {
+                    temp_streak++;
+                } else if (diffDays > 1) {
+                    temp_streak = 1;
+                }
+                // if diffDays === 0 (same day), ignore/don't reset
+            }
+            if (temp_streak > best_streak) best_streak = temp_streak;
+            last_date = dateStr;
+        });
+
+        // Current streak logic: check if last game was today or yesterday
+        const today = new Date().toISOString().split('T')[0];
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+        if (last_date === today || last_date === yesterday) {
+            current_streak = temp_streak;
+        } else {
+            current_streak = 0;
+        }
+
+        // Find best rank (simple heuristic: just store the latest one or maybe we need an ordering)
+        // For now, let's keep the user's best rank ever achieved? 
+        // Or just let the FE decide? The Stats table has 'best_rank'.
+        // Ranks: Beginner, Good, Solid... Queen Bee.
+        const rankOrder = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee", "Perfect!"];
+        let best_rank = "Beginner";
+        let max_rank_idx = -1;
+
+        games.forEach(g => {
+            const idx = rankOrder.indexOf(g.rank);
+            if (idx > max_rank_idx) {
+                max_rank_idx = idx;
+                best_rank = g.rank;
+            }
+        });
+
+        // Update Stats Table
+        await pool.query(`
+            INSERT INTO stats (user_uid, games_played, current_streak, best_streak, best_rank, last_played_date)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (user_uid)
+            DO UPDATE SET
+                games_played = EXCLUDED.games_played,
+                current_streak = EXCLUDED.current_streak,
+                best_streak = EXCLUDED.best_streak,
+                best_rank = EXCLUDED.best_rank,
+                last_played_date = EXCLUDED.last_played_date;
+        `, [uid, games_played, current_streak, best_streak, best_rank, last_date]);
+
+        res.json({ success: true, stats_updated: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Save failed' });

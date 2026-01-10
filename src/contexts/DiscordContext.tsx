@@ -8,6 +8,7 @@ interface DiscordContextType {
     auth: any | null;
     isLoading: boolean;
     error: string | null;
+    authError: string | null;
 }
 
 const DiscordContext = createContext<DiscordContextType>({
@@ -15,6 +16,7 @@ const DiscordContext = createContext<DiscordContextType>({
     auth: null,
     isLoading: true,
     error: null,
+    authError: null,
 });
 
 export const useDiscord = () => useContext(DiscordContext);
@@ -24,6 +26,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [auth, setAuth] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     // Primary Setup Effect
     useEffect(() => {
@@ -39,6 +42,8 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
                 if (isDiscord) {
                     sdk = new DiscordSDK(DISCORD_CLIENT_ID);
+                    // Explicitly do NOT set mock data here.
+                    // We must wait for sdk.ready() and the token exchange.
                 } else {
                     console.log("Running in browser mode, mocking Discord SDK.");
                     const mock = new DiscordSDKMock(DISCORD_CLIENT_ID, "12345", "mock_discriminator");
@@ -92,9 +97,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     code,
-                                    // Send current origin (e.g. https://spell.velarixsolutions.nl) to backend
-                                    // to use as the redirect_uri in the token exchange.
-                                    redirect_uri: window.location.origin
+                                    // redirect_uri: window.location.origin // Do NOT send this in Discord Activity mode as it is discordsays.com
                                 }),
                             });
 
@@ -104,14 +107,21 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                                 setAuth({ ...data, code });
                             } else {
                                 console.warn("Backend token exchange failed (possibly dev mode), continue with code only.");
+                                let errorMessage = "Unknown Auth Error";
                                 try {
                                     const errorData = await response.json();
                                     console.error("Exchange debug info:", errorData);
+                                    errorMessage = errorData.error || errorMessage;
+                                    if (errorData.details && errorData.details.error_description) {
+                                        errorMessage += `: ${errorData.details.error_description}`;
+                                    }
                                 } catch (e) { }
+                                setAuthError(errorMessage);
                                 setAuth({ code });
                             }
                         } catch (e) {
                             console.error("Token exchange network error", e);
+                            setAuthError("Token exchange network error");
                             setAuth({ code });
                         }
 
@@ -152,7 +162,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, [isLoading, discordSdk]);
 
     return (
-        <DiscordContext.Provider value={{ discordSdk, auth, isLoading, error }}>
+        <DiscordContext.Provider value={{ discordSdk, auth, isLoading, error, authError }}>
             {children}
         </DiscordContext.Provider>
     );

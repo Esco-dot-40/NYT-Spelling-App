@@ -57,6 +57,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 2. Fallback: Check for existing "Guest" or stored session in localStorage
+
+      // CRITICAL: If we are in Discord (frame_id present), DO NOT FALLBACK TO GUEST.
+      // We should wait for the real auth to finish or fail explicitly.
+      const isDiscordMode = window.location.search.includes('frame_id');
+      if (isDiscordMode) {
+        console.log("In Discord Mode - Waiting for real auth, skipping Guest fallback.");
+        // We intentionally do NOT set 'user' here. The UI will stay in "Loading..." 
+        // or show the error banner we implemented if authError is present.
+        // Force stop loading so error banner can show if needed
+        setLoading(false);
+        return;
+      }
+
       const storageKey = 'alphabee_user_identity';
       const storedIdentity = localStorage.getItem(storageKey);
 

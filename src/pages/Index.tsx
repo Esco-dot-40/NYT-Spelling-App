@@ -3,9 +3,12 @@ import { Navigation } from "@/components/Navigation";
 import { Link } from "react-router-dom";
 import { Lightbulb, ArrowRight, Bug } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDiscord } from "@/contexts/DiscordContext";
 
 const Index = () => {
   const { user } = useAuth();
+  const { authError } = useDiscord();
+  const isDiscord = window.location.search.includes('frame_id');
 
   return (
     <>
@@ -13,6 +16,36 @@ const Index = () => {
 
       {/* Main Content Wrapper - Relative z-10 to sit above particle background */}
       <div className="relative z-10">
+
+        {/* DEBUG: Auth Error Banner */}
+        {isDiscord && authError && (
+          <div className="mx-auto max-w-3xl px-4 pt-4">
+            <div className="bg-destructive/10 border-2 border-destructive/50 text-foreground p-6 rounded-xl shadow-lg animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-destructive/20 rounded-full">
+                  <Bug className="w-6 h-6 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-destructive mb-2">Authentication Failed</h3>
+                  <p className="text-sm mb-4 opacity-90">{authError}</p>
+
+                  {/* Heuristic: If it looks like a Redirect Mismatch, show the fix */}
+                  {(authError.includes('redirect_uri') || authError.includes('Redirect')) && (
+                    <div className="bg-black/20 p-4 rounded-md mt-2">
+                      <p className="text-xs font-mono mb-2 uppercase tracking-wider opacity-70">Action Required</p>
+                      <p className="text-sm mb-2">Add this URL to your <strong>Discord Developer Portal</strong> &rarr; <strong>OAuth2</strong> &rarr; <strong>Redirects</strong>:</p>
+                      <code className="block bg-black/40 p-2 rounded text-xs break-all select-all font-mono text-yellow-400">
+                        {/* Try to parse out the URI if it's in the text, otherwise ask them to check server logs or infer it */}
+                        {window.location.protocol}//{window.location.host}
+                      </code>
+                      <p className="text-xs mt-2 text-muted-foreground">(Or check the Railway logs for the exact URL the server tried to use)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Welcome Greeting */}
         <div className="mx-auto max-w-5xl px-4 pt-6 text-center md:text-left">
