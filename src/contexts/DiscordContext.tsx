@@ -27,12 +27,9 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // Primary Setup Effect
     useEffect(() => {
-        const setupDiscord = async () => {
-            // Force timeout race condition in logic
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Connection timeout")), 5000)
-            );
+        let timeoutId: NodeJS.Timeout;
 
+        const setupDiscord = async () => {
             try {
                 // Check if in Discord iframe
                 const isDiscord = window.location.search.includes('frame_id') || window.parent !== window;
@@ -48,6 +45,13 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     setIsLoading(false);
                     return;
                 }
+
+                // Create a promise that rejects after 5s, but we can clear the timeout
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error("Connection timeout"));
+                    }, 5000);
+                });
 
                 // Race against timeout
                 await Promise.race([
@@ -70,7 +74,6 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                         // Exchange code for token and user info via our backend
                         let discordUser = null;
                         try {
-                            // Only try to exchange if we aren't in mock mode, or if backend supports it
                             const response = await fetch('/api/token', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -80,7 +83,7 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                             if (response.ok) {
                                 const data = await response.json();
                                 discordUser = data.user;
-                                setAuth({ ...data, code }); // Store token and user object
+                                setAuth({ ...data, code });
                             } else {
                                 console.warn("Backend token exchange failed (possibly dev mode), continue with code only.");
                                 setAuth({ code });
@@ -98,18 +101,18 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
             } catch (err: any) {
                 console.error("Discord SDK Error/Timeout:", err);
-
-                // If we timed out or failed, we STILL want to let the user in.
                 if (window.location.search.includes('frame_id')) {
                     setError("Discord Connection Failed: " + (err.message || "Unknown error"));
                 }
             } finally {
-                // ALWAYS finish loading
+                clearTimeout(timeoutId); // Critical: Clear timeout so it doesn't reject later
                 setIsLoading(false);
             }
         };
 
         setupDiscord();
+
+        return () => clearTimeout(timeoutId);
     }, []);
 
     // Safety Valve: Force loading to finish after 6 seconds max

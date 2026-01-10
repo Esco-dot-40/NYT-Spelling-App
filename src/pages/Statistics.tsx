@@ -45,67 +45,70 @@ export default function Statistics() {
       }
 
       try {
-        let loadedFromApi = false;
         let apiStats: any = {};
 
-        // 1. Try API first (Always enabled via proxy)
+        // 1. Fetch API Stats
         try {
           const res = await fetch(`/api/stats/${user.uid}`);
           if (res.ok) {
             apiStats = await res.json();
-            // Basic check to see if we got real data
-            if (apiStats && (apiStats.games_played !== undefined || apiStats.current_streak !== undefined)) {
-              loadedFromApi = true;
-            }
           }
         } catch (e) {
-          console.warn("API Stats Fetch Failed or Offline", e);
+          console.warn("API Stats Fetch Failed", e);
         }
 
-        if (loadedFromApi) {
-          setStats({
-            gamesPlayed: apiStats.games_played || 0,
-            averageScore: 0,
-            bestRank: apiStats.best_rank || "Beginner",
-            currentStreak: apiStats.current_streak || 0,
-            bestStreak: apiStats.best_streak || 0,
-          });
-        } else {
-          // 2. LocalStorage Fallback (Updated with new keys)
-          const statsKey = `spellorfail_stats_${user.uid}`;
-          const prefix = `spellorfail_game_${user.uid}_`;
-          let totalScore = 0;
-          let gameCount = 0;
+        // 2. Fetch Local Stats (Always calculate)
+        const statsKey = `spellorfail_stats_${user.uid}`;
+        const prefix = `spellorfail_game_${user.uid}_`;
+        const legacyPrefix = `alphabee_game_${user.uid}_`;
 
-          // Also check for legacy 'alphabee' keys just in case
-          const legacyPrefix = `alphabee_game_${user.uid}_`;
+        let localTotalScore = 0;
+        let localGameCount = 0;
 
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith(prefix) || key.startsWith(legacyPrefix))) {
-              try {
-                const data = JSON.parse(localStorage.getItem(key) || "{}");
-                if (data && data.score !== undefined) {
-                  totalScore += data.score;
-                  gameCount++;
-                }
-              } catch (e) {
-                // ignore
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith(prefix) || key.startsWith(legacyPrefix))) {
+            try {
+              const data = JSON.parse(localStorage.getItem(key) || "{}");
+              if (data && data.score !== undefined) {
+                localTotalScore += data.score;
+                localGameCount++;
               }
-            }
+            } catch (e) { }
           }
-
-          const statsStr = localStorage.getItem(statsKey);
-          const storedStats = statsStr ? JSON.parse(statsStr) : {};
-
-          setStats({
-            gamesPlayed: storedStats.games_played || gameCount || 0,
-            averageScore: gameCount > 0 ? Math.round(totalScore / gameCount) : 0,
-            bestRank: storedStats.best_rank || "Beginner",
-            currentStreak: storedStats.current_streak || 0,
-            bestStreak: storedStats.best_streak || 0,
-          });
         }
+
+        const statsStr = localStorage.getItem(statsKey);
+        const storedLocalStats = statsStr ? JSON.parse(statsStr) : {};
+
+        // 3. Merge Logic: Max(API, Local)
+        // This ensures if API is 0 (fresh db) but Local has 5 games, we show 5.
+        // If API has 10 (played elsewhere) and Local has 2, we show 10.
+        const mergedGamesPlayed = Math.max(
+          (apiStats.games_played || 0),
+          (storedLocalStats.games_played || localGameCount || 0)
+        );
+
+        const mergedBestStreak = Math.max(
+          (apiStats.best_streak || 0),
+          (storedLocalStats.best_streak || 0)
+        );
+
+        const mergedCurrentStreak = Math.max(
+          (apiStats.current_streak || 0),
+          (storedLocalStats.current_streak || 0)
+        );
+
+        // Calculate average score (prefer local calculation if valid, otherwise 0)
+        const avgScore = localGameCount > 0 ? Math.round(localTotalScore / localGameCount) : 0;
+
+        setStats({
+          gamesPlayed: mergedGamesPlayed,
+          averageScore: avgScore,
+          bestRank: (apiStats.best_rank && apiStats.best_rank !== "Beginner") ? apiStats.best_rank : (storedLocalStats.best_rank || "Beginner"),
+          currentStreak: mergedCurrentStreak,
+          bestStreak: mergedBestStreak,
+        });
 
       } catch (error) {
         console.error("Error fetching stats:", error);
