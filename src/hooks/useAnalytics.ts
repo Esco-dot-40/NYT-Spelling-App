@@ -11,7 +11,10 @@ export const useAnalytics = () => {
     const lastPath = useRef<string | null>(null);
 
     useEffect(() => {
-        // Prevent double logging in strict mode or quick re-renders
+        // Wait for user to be identified (Guest or Real) to strictly avoid 'anonymous' logs
+        if (!user) return;
+
+        // Prevent double logging in strict mode or quick re-renders (idempotency check by path)
         if (initialized.current && lastPath.current === location.pathname) return;
 
         const logVisit = async () => {
@@ -25,7 +28,7 @@ export const useAnalytics = () => {
 
                 // 2. Prepare Payload
                 const payload = {
-                    uid: user?.uid || 'anonymous',
+                    uid: user.uid, // Strictly use the identified user (Guest or Discord)
                     ip: ipData.ip,
                     city: ipData.city,
                     country: ipData.country_name,
@@ -43,7 +46,7 @@ export const useAnalytics = () => {
                     body: JSON.stringify(payload)
                 });
 
-                console.log('[Analytics] Logged visit:', location.pathname);
+                console.log('[Analytics] Logged visit for:', user.uid);
 
             } catch (err) {
                 console.error('[Analytics] Failed to log visit:', err);
@@ -52,5 +55,5 @@ export const useAnalytics = () => {
 
         logVisit();
 
-    }, [location.pathname, user?.uid]);
+    }, [location.pathname, user]); // Re-run when user becomes available
 };
