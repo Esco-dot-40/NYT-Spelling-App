@@ -74,6 +74,7 @@ const initDB = async () => {
         lat FLOAT,
         lng FLOAT,
         platform VARCHAR(50),
+        domain VARCHAR(100),
         user_agent TEXT,
         path VARCHAR(255),
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -83,7 +84,8 @@ const initDB = async () => {
         // Manual Migration for existing tables
         try {
             await pool.query("ALTER TABLE stats ADD COLUMN IF NOT EXISTS guild_id VARCHAR(255)");
-        } catch (e) { console.log("Migration note: guild_id col check"); }
+            await pool.query("ALTER TABLE visitor_logs ADD COLUMN IF NOT EXISTS domain VARCHAR(100)");
+        } catch (e) { console.log("Migration note: schema update check"); }
 
         console.log("Database tables checked/created.");
 
@@ -408,12 +410,12 @@ app.get('/api/history/:uid', async (req, res) => {
 
 // Log Visit
 app.post('/api/analytics/visit', async (req, res) => {
-    const { uid, ip, city, country, lat, lng, platform, user_agent, path } = req.body;
+    const { uid, ip, city, country, lat, lng, platform, domain, user_agent, path } = req.body;
     try {
         await pool.query(`
-            INSERT INTO visitor_logs (uid, ip, city, country, lat, lng, platform, user_agent, path)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, [uid, ip, city, country, lat, lng, platform, user_agent, path]);
+            INSERT INTO visitor_logs (uid, ip, city, country, lat, lng, platform, domain, user_agent, path)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [uid, ip, city, country, lat, lng, platform, domain, user_agent, path]);
         res.json({ success: true });
     } catch (err) {
         console.error("Analytics Log Error:", err);

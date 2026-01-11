@@ -27,14 +27,17 @@ export const useAnalytics = () => {
                 const ipData = await ipRes.json();
 
                 // 2. Prepare Payload
+                const isDiscord = window.location.search.includes('frame_id'); // Discord SDK adds this
+
                 const payload = {
-                    uid: user.uid, // Strictly use the identified user (Guest or Discord)
+                    uid: user.uid,
                     ip: ipData.ip,
                     city: ipData.city,
                     country: ipData.country_name,
                     lat: ipData.latitude,
                     lng: ipData.longitude,
-                    platform: navigator.platform,
+                    platform: isDiscord ? 'Discord App' : 'Web',
+                    domain: window.location.hostname, // Log the specific domain (staging vs prod)
                     user_agent: navigator.userAgent,
                     path: location.pathname
                 };

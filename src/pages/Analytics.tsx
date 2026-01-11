@@ -236,6 +236,7 @@ const Analytics = () => {
                                 <TableRow>
                                     <TableHead>Time</TableHead>
                                     <TableHead>Location</TableHead>
+                                    <TableHead>Domain</TableHead>
                                     <TableHead>Path</TableHead>
                                     <TableHead>Platform</TableHead>
                                     <TableHead>IP</TableHead>
@@ -249,6 +250,9 @@ const Analytics = () => {
                                         </TableCell>
                                         <TableCell>
                                             {visit.city}, {visit.country}
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs text-blue-400">
+                                            {visit.domain || 'unknown'}
                                         </TableCell>
                                         <TableCell className="font-mono text-xs">{visit.path}</TableCell>
                                         <TableCell>{visit.platform}</TableCell>
