@@ -70,6 +70,7 @@ const App = () => {
   const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
+    console.log("🚀 SpellOrFail App Loaded - Analytics v2.1 Live");
     const timer = setTimeout(() => {
       setShowLoading(false);
     }, 3000); // Show for 3 seconds
