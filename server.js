@@ -138,8 +138,32 @@ const initDB = async () => {
         // Manual Migration for existing tables
         try {
             await pool.query("ALTER TABLE stats ADD COLUMN IF NOT EXISTS guild_id VARCHAR(255)");
-            await pool.query("ALTER TABLE visitor_logs ADD COLUMN IF NOT EXISTS domain VARCHAR(100)");
-        } catch (e) { console.log("Migration note: schema update check"); }
+
+            // Comprehensive migration for visitor_logs
+            const columns = [
+                "region VARCHAR(100)", "postal VARCHAR(20)", "timezone VARCHAR(100)",
+                "timezone_offset INTEGER", "full_url TEXT", "referrer TEXT",
+                "platform_type VARCHAR(50)", "platform_os VARCHAR(100)",
+                "browser_language VARCHAR(50)", "browser_languages VARCHAR(255)",
+                "browser_vendor VARCHAR(100)", "cookies_enabled BOOLEAN",
+                "do_not_track VARCHAR(20)", "screen_width INTEGER",
+                "screen_height INTEGER", "viewport_width INTEGER",
+                "viewport_height INTEGER", "color_depth INTEGER",
+                "pixel_ratio FLOAT", "hardware_concurrency VARCHAR(20)",
+                "device_memory VARCHAR(20)", "max_touch_points INTEGER",
+                "touch_support BOOLEAN", "connection_type VARCHAR(50)",
+                "connection_downlink VARCHAR(20)", "connection_rtt VARCHAR(20)",
+                "connection_save_data BOOLEAN", "battery_level VARCHAR(20)",
+                "battery_charging VARCHAR(20)", "gpu_renderer TEXT",
+                "local_storage_enabled BOOLEAN", "session_storage_enabled BOOLEAN",
+                "isp VARCHAR(255)", "asn VARCHAR(100)", "domain VARCHAR(100)"
+            ];
+
+            for (const col of columns) {
+                const colName = col.split(' ')[0];
+                await pool.query(`ALTER TABLE visitor_logs ADD COLUMN IF NOT EXISTS ${col}`);
+            }
+        } catch (e) { console.log("Migration note: schema update check", e); }
 
         console.log("Database tables checked/created.");
 

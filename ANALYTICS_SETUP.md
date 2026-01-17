@@ -58,9 +58,10 @@ Your analytics system now captures **EVERY SINGLE THING POSSIBLE** from visitors
 
 ## 🔐 Admin Panel Access
 
+**Production URL:** `https://spell.velarixsolutions.nl/analytics`  
 **Password:** `Poncholove20!!`
 
-Navigate to: `/analytics`
+Navigate to: `/analytics` on your production domain
 
 ---
 
@@ -92,15 +93,15 @@ Navigate to: `/analytics`
 ## 🚀 Deployment Steps
 
 ### 1. Railway Database Setup
-Your DATABASE_URL is already configured:
+Your **PRODUCTION** DATABASE_URL:
 ```
-postgresql://postgres:woZITCpBpmtfVskyRXETaPIZaGpGYlVJ@postgres.railway.internal:5432/railway
+postgresql://postgres:PirRLqwNZiyZyCybrVogqpwiZfLqeNRX@postgres.railway.internal:5432/railway
 ```
 
 ### 2. Set Environment Variable
-In your Railway dashboard, set:
+In your Railway dashboard (Production environment), set:
 ```
-DATABASE_URL=postgresql://postgres:woZITCpBpmtfVskyRXETaPIZaGpGYlVJ@postgres.railway.internal:5432/railway
+DATABASE_URL=postgresql://postgres:PirRLqwNZiyZyCybrVogqpwiZfLqeNRX@postgres.railway.internal:5432/railway
 ```
 
 ### 3. Deploy

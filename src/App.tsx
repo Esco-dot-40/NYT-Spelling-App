@@ -63,8 +63,7 @@ const DiscordLoadingWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Removed transition-transform and origin-top to support CSS 'zoom' scaling
-  return <div id="ui-content-wrapper" className="w-full">{children}</div>;
+  return <div id="ui-content-wrapper" className="w-full h-full min-h-screen relative z-10">{children}</div>;
 };
 
 const App = () => {
@@ -118,10 +117,20 @@ const App = () => {
                       <Route path="/analytics" element={
                         <>
                           <Navigation />
-                          <Analytics />
+                          <div className="bg-background min-h-screen">
+                            <Analytics />
+                          </div>
                         </>
                       } />
-                      <Route path="*" element={<NotFound />} />
+                      <Route path="/admin" element={
+                        <>
+                          <Navigation />
+                          <div className="bg-background min-h-screen">
+                            <Analytics />
+                          </div>
+                        </>
+                      } />
+                      <Route path="*" element={<div className="bg-background min-h-screen"><NotFound /></div>} />
                     </Routes>
                     <AnalyticsTracker />
                   </BrowserRouter>

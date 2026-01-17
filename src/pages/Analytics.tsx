@@ -149,7 +149,7 @@ const Analytics = () => {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500 relative z-50 pb-20">
+        <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500 relative z-50 pb-20 min-h-screen bg-background">
             {/* Header */}
             <div className="flex justify-between items-center bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 p-6 rounded-xl backdrop-blur mb-6 border border-primary/20 shadow-lg">
                 <div>
@@ -161,7 +161,7 @@ const Analytics = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
-                        Live • Auto-refresh every 30s • <span className="font-semibold text-green-500">{data.active_now} active now</span>
+                        Live • Auto-refresh every 30s • <span className="font-semibold text-green-500">{(data?.active_now || 0)} active now</span>
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -170,7 +170,7 @@ const Analytics = () => {
                             localStorage.removeItem('analytics_auth');
                             setAuthenticated(false);
                         }}
-                        className="px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                        className="px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all font-medium border border-destructive/20"
                     >
                         🔒 Logout
                     </button>
@@ -185,7 +185,7 @@ const Analytics = () => {
                         <Eye className="h-5 w-5 text-pink-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-pink-500">{data.total_visits.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-pink-500">{(data?.total_visits || 0).toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">All time page views</p>
                     </CardContent>
                 </Card>
@@ -195,7 +195,7 @@ const Analytics = () => {
                         <Users className="h-5 w-5 text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-purple-500">{data.unique_visitors.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-purple-500">{(data?.unique_visitors || 0).toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">Distinct IP addresses</p>
                     </CardContent>
                 </Card>
@@ -205,7 +205,7 @@ const Analytics = () => {
                         <Activity className="h-5 w-5 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-blue-500">{data.active_now}</div>
+                        <div className="text-3xl font-bold text-blue-500">{(data?.active_now || 0)}</div>
                         <p className="text-xs text-muted-foreground mt-1">Last 5 minutes</p>
                     </CardContent>
                 </Card>
@@ -215,7 +215,7 @@ const Analytics = () => {
                         <Globe className="h-5 w-5 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-green-500">{data.geo_data.length}</div>
+                        <div className="text-3xl font-bold text-green-500">{(data?.geo_data?.length || 0)}</div>
                         <p className="text-xs text-muted-foreground mt-1">Unique locations</p>
                     </CardContent>
                 </Card>
@@ -225,7 +225,7 @@ const Analytics = () => {
             <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-primary">
                             <Users className="h-5 w-5" />
                             New vs Returning Visitors
                         </CardTitle>
@@ -235,13 +235,13 @@ const Analytics = () => {
                             <div>
                                 <div className="flex justify-between mb-2">
                                     <span className="text-sm font-medium">New Visitors</span>
-                                    <span className="text-sm font-bold text-green-500">{data.new_vs_returning.new_visitors}</span>
+                                    <span className="text-sm font-bold text-green-500">{(data?.new_vs_returning?.new_visitors || 0)}</span>
                                 </div>
                                 <div className="h-2 bg-secondary rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all"
+                                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all opacity-80"
                                         style={{
-                                            width: `${(parseInt(data.new_vs_returning.new_visitors) / data.unique_visitors * 100)}%`
+                                            width: `${data?.unique_visitors ? (parseInt(data.new_vs_returning.new_visitors || '0') / data.unique_visitors * 100) : 0}%`
                                         }}
                                     />
                                 </div>
@@ -249,13 +249,13 @@ const Analytics = () => {
                             <div>
                                 <div className="flex justify-between mb-2">
                                     <span className="text-sm font-medium">Returning Visitors</span>
-                                    <span className="text-sm font-bold text-blue-500">{data.new_vs_returning.returning_visitors}</span>
+                                    <span className="text-sm font-bold text-blue-500">{(data?.new_vs_returning?.returning_visitors || 0)}</span>
                                 </div>
                                 <div className="h-2 bg-secondary rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
+                                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all opacity-80"
                                         style={{
-                                            width: `${(parseInt(data.new_vs_returning.returning_visitors) / data.unique_visitors * 100)}%`
+                                            width: `${data?.unique_visitors ? (parseInt(data.new_vs_returning.returning_visitors || '0') / data.unique_visitors * 100) : 0}%`
                                         }}
                                     />
                                 </div>
@@ -266,31 +266,31 @@ const Analytics = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-primary">
                             <Smartphone className="h-5 w-5" />
                             Device Capabilities
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center p-3 bg-primary/5 rounded-lg">
-                                <Cpu className="h-6 w-6 mx-auto mb-2 text-primary" />
-                                <div className="text-2xl font-bold">{parseFloat(data.device_capabilities.avg_cores || '0').toFixed(1)}</div>
+                            <div className="text-center p-3 bg-primary/5 rounded-lg border border-primary/10">
+                                <Cpu className="h-6 w-6 mx-auto mb-2 text-primary opacity-80" />
+                                <div className="text-2xl font-bold">{parseFloat(data?.device_capabilities?.avg_cores || '0').toFixed(1)}</div>
                                 <div className="text-xs text-muted-foreground">Avg CPU Cores</div>
                             </div>
-                            <div className="text-center p-3 bg-purple-500/5 rounded-lg">
-                                <Server className="h-6 w-6 mx-auto mb-2 text-purple-500" />
-                                <div className="text-2xl font-bold">{parseFloat(data.device_capabilities.avg_memory || '0').toFixed(1)} GB</div>
+                            <div className="text-center p-3 bg-purple-500/5 rounded-lg border border-purple-500/10">
+                                <Server className="h-6 w-6 mx-auto mb-2 text-purple-500 opacity-80" />
+                                <div className="text-2xl font-bold">{parseFloat(data?.device_capabilities?.avg_memory || '0').toFixed(1)} GB</div>
                                 <div className="text-xs text-muted-foreground">Avg RAM</div>
                             </div>
-                            <div className="text-center p-3 bg-green-500/5 rounded-lg">
-                                <Monitor className="h-6 w-6 mx-auto mb-2 text-green-500" />
-                                <div className="text-2xl font-bold">{data.device_capabilities.touch_devices}</div>
+                            <div className="text-center p-3 bg-green-500/5 rounded-lg border border-green-500/10">
+                                <Monitor className="h-6 w-6 mx-auto mb-2 text-green-500 opacity-80" />
+                                <div className="text-2xl font-bold">{(data?.device_capabilities?.touch_devices || 0)}</div>
                                 <div className="text-xs text-muted-foreground">Touch Devices</div>
                             </div>
-                            <div className="text-center p-3 bg-blue-500/5 rounded-lg">
-                                <Monitor className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                                <div className="text-2xl font-bold">{data.device_capabilities.non_touch_devices}</div>
+                            <div className="text-center p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                                <Monitor className="h-6 w-6 mx-auto mb-2 text-blue-500 opacity-80" />
+                                <div className="text-2xl font-bold">{(data?.device_capabilities?.non_touch_devices || 0)}</div>
                                 <div className="text-xs text-muted-foreground">Desktop</div>
                             </div>
                         </div>
@@ -300,7 +300,7 @@ const Analytics = () => {
 
             {/* Tabbed Analytics */}
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-5 p-1 bg-muted/50 rounded-lg">
                     <TabsTrigger value="overview">🌍 Overview</TabsTrigger>
                     <TabsTrigger value="devices">💻 Devices</TabsTrigger>
                     <TabsTrigger value="network">📡 Network</TabsTrigger>
@@ -309,31 +309,31 @@ const Analytics = () => {
                 </TabsList>
 
                 {/* OVERVIEW TAB */}
-                <TabsContent value="overview" className="space-y-4">
+                <TabsContent value="overview" className="space-y-4 mt-6">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         {/* Map View */}
-                        <Card className="col-span-4 min-h-[500px]">
+                        <Card className="col-span-4 min-h-[500px] border-primary/10">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Globe className="h-5 w-5" />
+                                    <Globe className="h-5 w-5 text-primary" />
                                     Global Visitor Distribution
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="h-[450px] p-0 overflow-hidden rounded-b-lg">
+                            <CardContent className="h-[450px] p-0 overflow-hidden rounded-b-lg border-t border-primary/10">
                                 <MapContainer center={[20, 0]} zoom={2} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
                                     <TileLayer
                                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                                     />
-                                    {data.geo_data.map((point, idx) => (
+                                    {data?.geo_data?.map((point, idx) => (
                                         <CircleMarker
                                             key={idx}
                                             center={[point.lat, point.lng]}
                                             pathOptions={{ color: '#ec4899', fillColor: '#ec4899', fillOpacity: 0.6 }}
-                                            radius={Math.min(parseInt(point.count) * 2 + 3, 20)}
+                                            radius={Math.min(parseInt(point.count || '1') * 2 + 3, 20)}
                                         >
                                             <Popup>
-                                                <div className="text-xs font-bold text-black">
+                                                <div className="text-xs font-bold text-black p-1">
                                                     {point.city}, {point.country}<br />
                                                     {point.count} visits
                                                 </div>
@@ -345,16 +345,16 @@ const Analytics = () => {
                         </Card>
 
                         {/* Platform Chart */}
-                        <Card className="col-span-3">
+                        <Card className="col-span-3 border-primary/10">
                             <CardHeader>
-                                <CardTitle>Platform Distribution</CardTitle>
+                                <CardTitle className="text-primary">Platform Distribution</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[350px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
-                                                data={data.platforms}
+                                                data={data?.platforms || []}
                                                 cx="50%"
                                                 cy="50%"
                                                 labelLine={false}
@@ -364,11 +364,11 @@ const Analytics = () => {
                                                 dataKey="count"
                                                 nameKey="platform_type"
                                             >
-                                                {data.platforms.map((entry, index) => (
+                                                {(data?.platforms || []).map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip />
+                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -378,11 +378,11 @@ const Analytics = () => {
                 </TabsContent>
 
                 {/* DEVICES TAB */}
-                <TabsContent value="devices" className="space-y-4">
+                <TabsContent value="devices" className="space-y-4 mt-6">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
+                        <Card className="border-primary/10">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-primary">
                                     <Monitor className="h-5 w-5" />
                                     Operating Systems
                                 </CardTitle>
@@ -390,20 +390,20 @@ const Analytics = () => {
                             <CardContent>
                                 <div className="h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={data.operating_systems}>
+                                        <BarChart data={data?.operating_systems || []}>
                                             <XAxis dataKey="platform_os" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
                                             <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                                            <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                                            <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} opacity={0.8} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="border-primary/10">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-primary">
                                     <Monitor className="h-5 w-5" />
                                     Screen Resolutions
                                 </CardTitle>
@@ -411,11 +411,11 @@ const Analytics = () => {
                             <CardContent>
                                 <div className="h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={data.screen_resolutions}>
+                                        <BarChart data={data?.screen_resolutions || []}>
                                             <XAxis dataKey="resolution" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
                                             <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                                            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                                            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} opacity={0.8} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -425,40 +425,43 @@ const Analytics = () => {
                 </TabsContent>
 
                 {/* NETWORK TAB */}
-                <TabsContent value="network" className="space-y-4">
+                <TabsContent value="network" className="space-y-4 mt-6">
                     <div className="grid gap-4 md:grid-cols-3">
-                        <Card>
+                        <Card className="border-primary/10">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-primary">
                                     <Wifi className="h-5 w-5" />
                                     Connection Types
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2">
-                                    {data.connection_types.map((conn, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 bg-secondary/50 rounded">
-                                            <span className="font-medium capitalize">{conn.connection_type}</span>
+                                    {(data?.connection_types || []).map((conn, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg border border-border/20">
+                                            <span className="font-medium capitalize text-sm">{conn.connection_type}</span>
                                             <span className="text-primary font-bold">{conn.count}</span>
                                         </div>
                                     ))}
+                                    {(!data?.connection_types || data.connection_types.length === 0) && (
+                                        <div className="text-center text-muted-foreground py-4 text-sm">No connection data recorded</div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="border-primary/10">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-primary">
                                     <Clock className="h-5 w-5" />
                                     Top Timezones
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ScrollArea className="h-[200px]">
-                                    <div className="space-y-2">
-                                        {data.timezones.map((tz, idx) => (
-                                            <div key={idx} className="flex justify-between items-center p-2 bg-secondary/50 rounded text-sm">
-                                                <span className="font-medium">{tz.timezone}</span>
+                                    <div className="space-y-2 pr-4">
+                                        {(data?.timezones || []).map((tz, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-2 bg-secondary/30 rounded text-sm border border-border/20">
+                                                <span className="font-medium truncate max-w-[180px]">{tz.timezone}</span>
                                                 <span className="text-primary font-bold">{tz.count}</span>
                                             </div>
                                         ))}
@@ -467,19 +470,19 @@ const Analytics = () => {
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="border-primary/10">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-primary">
                                     <Server className="h-5 w-5" />
                                     Top ISPs
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ScrollArea className="h-[200px]">
-                                    <div className="space-y-2">
-                                        {data.top_isps.map((isp, idx) => (
-                                            <div key={idx} className="flex justify-between items-center p-2 bg-secondary/50 rounded text-sm">
-                                                <span className="font-medium truncate">{isp.isp.substring(0, 30)}</span>
+                                    <div className="space-y-2 pr-4">
+                                        {(data?.top_isps || []).map((isp, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-2 bg-secondary/30 rounded text-sm border border-border/20">
+                                                <span className="font-medium truncate max-w-[180px]">{isp.isp}</span>
                                                 <span className="text-primary font-bold">{isp.count}</span>
                                             </div>
                                         ))}
@@ -491,10 +494,10 @@ const Analytics = () => {
                 </TabsContent>
 
                 {/* TRAFFIC TAB */}
-                <TabsContent value="traffic" className="space-y-4">
-                    <Card>
+                <TabsContent value="traffic" className="space-y-4 mt-6">
+                    <Card className="border-primary/10">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-primary">
                                 <Link2 className="h-5 w-5" />
                                 Top Referrers
                             </CardTitle>
@@ -502,17 +505,18 @@ const Analytics = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {data.top_referrers.length > 0 ? (
+                                {data?.top_referrers && data.top_referrers.length > 0 ? (
                                     data.top_referrers.map((ref, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-all">
-                                            <span className="font-medium text-sm truncate max-w-[500px]">{ref.referrer}</span>
-                                            <span className="text-primary font-bold text-lg">{ref.count}</span>
+                                        <div key={idx} className="flex justify-between items-center p-4 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-all border border-border/20">
+                                            <span className="font-medium text-sm truncate max-w-[70%]">{ref.referrer}</span>
+                                            <span className="text-primary font-bold text-xl">{ref.count}</span>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center text-muted-foreground py-8">
-                                        <Link2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                        <p>No external referrers yet. All traffic is direct.</p>
+                                    <div className="text-center text-muted-foreground py-12 bg-secondary/10 rounded-xl border border-dashed border-border/50">
+                                        <Link2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                        <p className="text-lg">No external referrers yet.</p>
+                                        <p className="text-sm opacity-50">All monitored traffic is currently direct.</p>
                                     </div>
                                 )}
                             </div>
@@ -521,68 +525,69 @@ const Analytics = () => {
                 </TabsContent>
 
                 {/* RECENT TAB */}
-                <TabsContent value="recent" className="space-y-4">
-                    <Card>
+                <TabsContent value="recent" className="space-y-4 mt-6">
+                    <Card className="border-primary/10">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-primary">
                                 <Activity className="h-5 w-5" />
                                 Recent Activity
                             </CardTitle>
                             <CardDescription>Last 100 visits with comprehensive details</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-[500px]">
+                            <ScrollArea className="h-[600px] rounded-md border border-border/50">
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="bg-muted/50">
                                         <TableRow>
-                                            <TableHead>Time</TableHead>
+                                            <TableHead className="w-[180px]">Time</TableHead>
                                             <TableHead>Location</TableHead>
-                                            <TableHead>Page</TableHead>
-                                            <TableHead>Device</TableHead>
-                                            <TableHead>Screen</TableHead>
+                                            <TableHead>Page/Path</TableHead>
+                                            <TableHead>System</TableHead>
+                                            <TableHead>Resolution</TableHead>
                                             <TableHead>Connection</TableHead>
-                                            <TableHead>IP</TableHead>
+                                            <TableHead className="text-right">IP Details</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {data.recent_visits.map((visit) => (
-                                            <TableRow key={visit.id} className="hover:bg-secondary/50">
-                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                        {(data?.recent_visits || []).map((visit) => (
+                                            <TableRow key={visit.id} className="hover:bg-secondary/40 transition-colors border-b border-border/10">
+                                                <TableCell className="font-mono text-[10px] text-muted-foreground">
                                                     {new Date(visit.timestamp).toLocaleString()}
                                                 </TableCell>
-                                                <TableCell className="text-sm">
-                                                    {visit.city}, {visit.country}
-                                                    <br />
-                                                    <span className="text-xs text-muted-foreground">{visit.timezone}</span>
+                                                <TableCell className="text-xs">
+                                                    <div className="font-bold">{visit.city}, {visit.country}</div>
+                                                    <div className="opacity-60 text-[10px]">{visit.timezone}</div>
                                                 </TableCell>
-                                                <TableCell className="font-mono text-xs">
-                                                    <div className="max-w-[200px] truncate">{visit.path}</div>
+                                                <TableCell className="font-mono text-[10px]">
+                                                    <div className="max-w-[150px] truncate text-primary/80">{visit.path}</div>
                                                     {visit.referrer && visit.referrer !== 'direct' && (
-                                                        <div className="text-xs text-blue-400 truncate max-w-[200px]">
-                                                            ← {visit.referrer}
+                                                        <div className="text-[9px] text-blue-400 truncate max-w-[150px] mt-1">
+                                                            source: {visit.referrer}
                                                         </div>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-xs">
-                                                    <div>{visit.platform_os}</div>
-                                                    <div className="text-muted-foreground">{visit.platform_type}</div>
+                                                <TableCell className="text-[10px]">
+                                                    <div className="font-medium">{visit.platform_os}</div>
+                                                    <div className="opacity-50">{visit.platform_type}</div>
                                                 </TableCell>
-                                                <TableCell className="font-mono text-xs">
+                                                <TableCell className="font-mono text-[10px]">
                                                     {visit.screen_width}×{visit.screen_height}
-                                                    {visit.touch_support && <div className="text-blue-400">📱 Touch</div>}
+                                                    {visit.touch_support && <div className="text-pink-500 font-bold mt-1 text-[8px] uppercase">Touch Enabled</div>}
                                                 </TableCell>
-                                                <TableCell className="text-xs">
-                                                    <div>{visit.connection_type}</div>
+                                                <TableCell className="text-[10px]">
+                                                    <div className="font-medium text-emerald-500">{visit.connection_type}</div>
                                                     {visit.battery_level !== 'unknown' && (
-                                                        <div className="text-muted-foreground">
-                                                            <Battery className="h-3 w-3 inline mr-1" />
+                                                        <div className="opacity-60 flex items-center gap-1 mt-1">
+                                                            <Battery className="h-2 w-2" />
                                                             {visit.battery_level}
                                                         </div>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="font-mono text-xs blur-sm hover:blur-none transition-all cursor-pointer">
-                                                    {visit.ip}
-                                                    <div className="text-muted-foreground text-[10px] truncate max-w-[150px]">
+                                                <TableCell className="text-right">
+                                                    <div className="font-mono text-[10px] blur-[3px] hover:blur-none transition-all cursor-help bg-secondary/50 px-2 py-1 rounded inline-block">
+                                                        {visit.ip}
+                                                    </div>
+                                                    <div className="text-muted-foreground text-[9px] truncate max-w-[120px] ml-auto mt-1">
                                                         {visit.isp}
                                                     </div>
                                                 </TableCell>
@@ -590,6 +595,9 @@ const Analytics = () => {
                                         ))}
                                     </TableBody>
                                 </Table>
+                                {(!data?.recent_visits || data.recent_visits.length === 0) && (
+                                    <div className="text-center py-20 text-muted-foreground">No recent activity logs found.</div>
+                                )}
                             </ScrollArea>
                         </CardContent>
                     </Card>
