@@ -68,15 +68,69 @@ const initDB = async () => {
       CREATE TABLE IF NOT EXISTS visitor_logs (
         id SERIAL PRIMARY KEY,
         uid VARCHAR(255),
+        
+        -- Location & IP
         ip VARCHAR(50),
         city VARCHAR(100),
         country VARCHAR(100),
+        region VARCHAR(100),
+        postal VARCHAR(20),
         lat FLOAT,
         lng FLOAT,
-        platform VARCHAR(50),
+        timezone VARCHAR(100),
+        timezone_offset INTEGER,
+        
+        -- Page Info
+        path VARCHAR(500),
         domain VARCHAR(100),
+        full_url TEXT,
+        referrer TEXT,
+        
+        -- Platform & Browser
+        platform_type VARCHAR(50),
+        platform_os VARCHAR(100),
         user_agent TEXT,
-        path VARCHAR(255),
+        browser_language VARCHAR(50),
+        browser_languages VARCHAR(255),
+        browser_vendor VARCHAR(100),
+        cookies_enabled BOOLEAN,
+        do_not_track VARCHAR(20),
+        
+        -- Screen & Display
+        screen_width INTEGER,
+        screen_height INTEGER,
+        viewport_width INTEGER,
+        viewport_height INTEGER,
+        color_depth INTEGER,
+        pixel_ratio FLOAT,
+        
+        -- Device Capabilities
+        hardware_concurrency VARCHAR(20),
+        device_memory VARCHAR(20),
+        max_touch_points INTEGER,
+        touch_support BOOLEAN,
+        
+        -- Connection
+        connection_type VARCHAR(50),
+        connection_downlink VARCHAR(20),
+        connection_rtt VARCHAR(20),
+        connection_save_data BOOLEAN,
+        
+        -- Battery
+        battery_level VARCHAR(20),
+        battery_charging VARCHAR(20),
+        
+        -- GPU
+        gpu_renderer TEXT,
+        
+        -- Storage
+        local_storage_enabled BOOLEAN,
+        session_storage_enabled BOOLEAN,
+        
+        -- ISP
+        isp VARCHAR(255),
+        asn VARCHAR(100),
+        
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -410,12 +464,43 @@ app.get('/api/history/:uid', async (req, res) => {
 
 // Log Visit
 app.post('/api/analytics/visit', async (req, res) => {
-    const { uid, ip, city, country, lat, lng, platform, domain, user_agent, path } = req.body;
+    const data = req.body;
     try {
         await pool.query(`
-            INSERT INTO visitor_logs (uid, ip, city, country, lat, lng, platform, domain, user_agent, path)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        `, [uid, ip, city, country, lat, lng, platform, domain, user_agent, path]);
+            INSERT INTO visitor_logs (
+                uid, ip, city, country, region, postal, lat, lng, timezone, timezone_offset,
+                path, domain, full_url, referrer,
+                platform_type, platform_os, user_agent, browser_language, browser_languages, 
+                browser_vendor, cookies_enabled, do_not_track,
+                screen_width, screen_height, viewport_width, viewport_height, color_depth, pixel_ratio,
+                hardware_concurrency, device_memory, max_touch_points, touch_support,
+                connection_type, connection_downlink, connection_rtt, connection_save_data,
+                battery_level, battery_charging, gpu_renderer,
+                local_storage_enabled, session_storage_enabled, isp, asn
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                $11, $12, $13, $14,
+                $15, $16, $17, $18, $19, $20, $21, $22,
+                $23, $24, $25, $26, $27, $28,
+                $29, $30, $31, $32,
+                $33, $34, $35, $36,
+                $37, $38, $39,
+                $40, $41, $42, $43
+            )
+        `, [
+            data.uid, data.ip, data.city, data.country, data.region, data.postal,
+            data.lat, data.lng, data.timezone, data.timezone_offset,
+            data.path, data.domain, data.full_url, data.referrer,
+            data.platform_type, data.platform_os, data.user_agent, data.browser_language,
+            data.browser_languages, data.browser_vendor, data.cookies_enabled, data.do_not_track,
+            data.screen_width, data.screen_height, data.viewport_width, data.viewport_height,
+            data.color_depth, data.pixel_ratio,
+            data.hardware_concurrency, data.device_memory, data.max_touch_points, data.touch_support,
+            data.connection_type, data.connection_downlink, data.connection_rtt, data.connection_save_data,
+            data.battery_level, data.battery_charging, data.gpu_renderer,
+            data.local_storage_enabled, data.session_storage_enabled, data.isp, data.asn
+        ]);
         res.json({ success: true });
     } catch (err) {
         console.error("Analytics Log Error:", err);
@@ -433,15 +518,78 @@ app.get('/api/analytics/summary', async (req, res) => {
         const unique_visitors = parseInt(uniqueRes.rows[0].count);
 
         const platformRes = await pool.query(`
-            SELECT platform, COUNT(*) as count 
+            SELECT platform_type, COUNT(*) as count 
             FROM visitor_logs 
-            GROUP BY platform
+            WHERE platform_type IS NOT NULL
+            GROUP BY platform_type
+        `);
+
+        const osRes = await pool.query(`
+            SELECT platform_os, COUNT(*) as count 
+            FROM visitor_logs 
+            WHERE platform_os IS NOT NULL
+            GROUP BY platform_os
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        const screenRes = await pool.query(`
+            SELECT CONCAT(screen_width, 'x', screen_height) as resolution, COUNT(*) as count
+            FROM visitor_logs
+            WHERE screen_width IS NOT NULL AND screen_height IS NOT NULL
+            GROUP BY screen_width, screen_height
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        const connectionRes = await pool.query(`
+            SELECT connection_type, COUNT(*) as count
+            FROM visitor_logs
+            WHERE connection_type IS NOT NULL AND connection_type != 'unknown'
+            GROUP BY connection_type
+            ORDER BY count DESC
+        `);
+
+        const timezoneRes = await pool.query(`
+            SELECT timezone, COUNT(*) as count
+            FROM visitor_logs
+            WHERE timezone IS NOT NULL
+            GROUP BY timezone
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        const referrerRes = await pool.query(`
+            SELECT referrer, COUNT(*) as count
+            FROM visitor_logs
+            WHERE referrer IS NOT NULL AND referrer != 'direct'
+            GROUP BY referrer
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        const ispRes = await pool.query(`
+            SELECT isp, COUNT(*) as count
+            FROM visitor_logs
+            WHERE isp IS NOT NULL AND isp != 'unknown'
+            GROUP BY isp
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        const deviceCapabilities = await pool.query(`
+            SELECT 
+                AVG(CAST(hardware_concurrency AS INTEGER)) FILTER (WHERE hardware_concurrency != 'unknown') as avg_cores,
+                AVG(CAST(device_memory AS INTEGER)) FILTER (WHERE device_memory != 'unknown') as avg_memory,
+                COUNT(*) FILTER (WHERE touch_support = true) as touch_devices,
+                COUNT(*) FILTER (WHERE touch_support = false) as non_touch_devices
+            FROM visitor_logs
         `);
 
         const recentRes = await pool.query(`
             SELECT * FROM visitor_logs 
             ORDER BY timestamp DESC 
-            LIMIT 50
+            LIMIT 100
         `);
 
         const geoRes = await pool.query(`
@@ -451,10 +599,38 @@ app.get('/api/analytics/summary', async (req, res) => {
             GROUP BY lat, lng, city, country
         `);
 
+        // Active now (last 5 minutes)
+        const activeNowRes = await pool.query(`
+            SELECT COUNT(DISTINCT ip) FROM visitor_logs
+            WHERE timestamp > NOW() - INTERVAL '5 minutes'
+        `);
+        const active_now = parseInt(activeNowRes.rows[0].count);
+
+        // New vs Returning
+        const newVsReturningRes = await pool.query(`
+            SELECT 
+                COUNT(DISTINCT ip) FILTER (WHERE visit_count = 1) as new_visitors,
+                COUNT(DISTINCT ip) FILTER (WHERE visit_count > 1) as returning_visitors
+            FROM (
+                SELECT ip, COUNT(*) as visit_count
+                FROM visitor_logs
+                GROUP BY ip
+            ) AS visitor_counts
+        `);
+
         res.json({
             total_visits,
             unique_visitors,
+            active_now,
+            new_vs_returning: newVsReturningRes.rows[0],
             platforms: platformRes.rows,
+            operating_systems: osRes.rows,
+            screen_resolutions: screenRes.rows,
+            connection_types: connectionRes.rows,
+            timezones: timezoneRes.rows,
+            top_referrers: referrerRes.rows,
+            top_isps: ispRes.rows,
+            device_capabilities: deviceCapabilities.rows[0],
             recent_visits: recentRes.rows,
             geo_data: geoRes.rows
         });
