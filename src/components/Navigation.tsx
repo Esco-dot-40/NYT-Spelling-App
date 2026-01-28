@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Moon, Sun, BarChart3, History, Home, LogIn, User, Volume2, VolumeX, Lightbulb, CornerDownLeft, ZoomIn } from "lucide-react";
+import { Moon, Sun, BarChart3, History, Home, LogIn, User, Volume2, VolumeX, Lightbulb, CornerDownLeft, ZoomIn, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -88,6 +88,17 @@ export const Navigation = () => {
             >
               <Link to="/suggestions" onClick={() => handleLinkClick("/suggestions")}>
                 <Lightbulb className="h-5 w-5" />
+              </Link>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className={isActive("/status") ? "bg-muted" : ""}
+            >
+              <Link to="/status" onClick={() => handleLinkClick("/status")}>
+                <Activity className="h-5 w-5" />
               </Link>
             </Button>
 

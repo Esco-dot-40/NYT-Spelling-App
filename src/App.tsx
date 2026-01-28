@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import History from "./pages/History";
 import Suggestions from "./pages/Suggestions";
+import Status from "./pages/Status";
 import NotFound from "./pages/NotFound";
 import Analytics from "./pages/Analytics";
 import EffectsOverlay from "./components/EffectsOverlay";
@@ -113,6 +114,14 @@ const App = () => {
                         <>
                           <Navigation />
                           <Suggestions />
+                        </>
+                      } />
+                      <Route path="/status" element={
+                        <>
+                          <Navigation />
+                          <div className="bg-background min-h-screen">
+                            <Status />
+                          </div>
                         </>
                       } />
                       <Route path="/analytics" element={
