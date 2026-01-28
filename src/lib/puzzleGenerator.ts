@@ -26,8 +26,8 @@ const canFormWord = (word: string, allowedLetters: Set<string>): boolean => {
  */
 const isPangram = (word: string, allLetters: Set<string>): boolean => {
   const wordLetters = new Set([...word]);
-  return allLetters.size === wordLetters.size && 
-         [...allLetters].every(letter => wordLetters.has(letter));
+  return allLetters.size === wordLetters.size &&
+    [...allLetters].every(letter => wordLetters.has(letter));
 };
 
 /**
@@ -47,7 +47,7 @@ export const generatePuzzle = (centerLetter: string, outerLetters: string[]): Pu
   const outer = outerLetters.map(l => l.toLowerCase());
   const allLetters = new Set([center, ...outer]);
   const allowedLetters = new Set(allLetters);
-  
+
   const validWords: string[] = [];
   const pangrams: string[] = [];
   let maxScore = 0;
@@ -55,17 +55,17 @@ export const generatePuzzle = (centerLetter: string, outerLetters: string[]): Pu
   for (const word of DICTIONARY) {
     // Must contain center letter
     if (!word.includes(center)) continue;
-    
+
     // Must only use allowed letters
     if (!canFormWord(word, allowedLetters)) continue;
-    
+
     validWords.push(word);
     const wordIsPangram = isPangram(word, allLetters);
-    
+
     if (wordIsPangram) {
       pangrams.push(word);
     }
-    
+
     maxScore += calculateWordScore(word, wordIsPangram);
   }
 
@@ -92,7 +92,7 @@ const seededRandom = (seed: number): number => {
 const shuffleWithSeed = <T>(array: T[], seed: number): T[] => {
   const shuffled = [...array];
   let currentIndex = shuffled.length;
-  
+
   while (currentIndex !== 0) {
     seed = (seed * 9301 + 49297) % 233280;
     const randomIndex = Math.floor((seed / 233280) * currentIndex);
@@ -102,7 +102,7 @@ const shuffleWithSeed = <T>(array: T[], seed: number): T[] => {
       shuffled[currentIndex],
     ];
   }
-  
+
   return shuffled;
 };
 
@@ -111,10 +111,12 @@ const shuffleWithSeed = <T>(array: T[], seed: number): T[] => {
  */
 const getDateSeed = (dateString?: string | null): number => {
   const date = dateString ? new Date(dateString) : new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return year * 10000 + month * 100 + day;
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  // Multiply by a large factor to ensure daily seeds are far apart
+  // and won't be reached by the search loop in generateRandomPuzzle
+  return (year * 10000 + month * 100 + day) * 10000;
 };
 
 /**
@@ -124,43 +126,43 @@ const getDateSeed = (dateString?: string | null): number => {
 export const generateRandomPuzzle = (seed?: number): PuzzleData => {
   const vowels = ['a', 'e', 'i', 'o', 'u'];
   const commonConsonants = ['r', 't', 'n', 's', 'l', 'c', 'd', 'p', 'g', 'h', 'm', 'b'];
-  
+
   let attempts = 0;
   const maxAttempts = 100;
   const useSeed = seed !== undefined;
   let currentSeed = seed || 0;
-  
+
   while (attempts < maxAttempts) {
     // Pick 2-3 vowels and 4-5 consonants for better word coverage
     const numVowels = (useSeed ? seededRandom(currentSeed++) : Math.random()) > 0.5 ? 2 : 3;
     const numConsonants = 7 - numVowels;
-    
+
     const selectedVowels = shuffleWithSeed(vowels, currentSeed++)
       .slice(0, numVowels);
-    
+
     const selectedConsonants = shuffleWithSeed(commonConsonants, currentSeed++)
       .slice(0, numConsonants);
-    
+
     const allLetters = [...selectedVowels, ...selectedConsonants];
-    
+
     // Prefer a vowel or common consonant as center
-    const centerIndex = useSeed 
+    const centerIndex = useSeed
       ? Math.floor(seededRandom(currentSeed++) * allLetters.length)
       : Math.floor(Math.random() * allLetters.length);
     const centerLetter = allLetters[centerIndex];
     const outerLetters = allLetters.filter(l => l !== centerLetter);
-    
+
     const puzzle = generatePuzzle(centerLetter, outerLetters);
-    
+
     // Ensure puzzle has at least 20 words and at least 1 pangram
     if (puzzle.validWords.length >= 20 && puzzle.pangrams.length >= 1) {
       return puzzle;
     }
-    
+
     attempts++;
     currentSeed += 10; // Jump seed for next attempt
   }
-  
+
   // Fallback to a known good puzzle
   return generatePuzzle('e', ['r', 't', 'a', 'c', 'h', 's']);
 };
@@ -170,13 +172,14 @@ export const generateRandomPuzzle = (seed?: number): PuzzleData => {
  * Can optionally force a specific date for new puzzles
  */
 export const getTodaysPuzzle = (forcedDate?: string | null): PuzzleData => {
-  const dateKey = forcedDate || new Date().toDateString();
+  // Use UTC ISO date as the consistent key
+  const dateKey = forcedDate || new Date().toISOString().split('T')[0];
   const storageKey = `velarix-daily-puzzle-${dateKey}`;
-  
+
   // If not forcing a date, try to load today's puzzle from storage
   if (!forcedDate) {
     const stored = localStorage.getItem('velarix-daily-puzzle');
-    
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -188,11 +191,11 @@ export const getTodaysPuzzle = (forcedDate?: string | null): PuzzleData => {
       }
     }
   }
-  
+
   // Generate new puzzle with seed based on date
   const seed = getDateSeed(forcedDate);
   const puzzle = generateRandomPuzzle(seed);
-  
+
   // Only save to main storage if it's today's actual puzzle (not forced)
   if (!forcedDate) {
     localStorage.setItem('velarix-daily-puzzle', JSON.stringify({
@@ -200,6 +203,6 @@ export const getTodaysPuzzle = (forcedDate?: string | null): PuzzleData => {
       puzzle,
     }));
   }
-  
+
   return puzzle;
 };

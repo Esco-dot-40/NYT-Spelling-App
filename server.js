@@ -173,7 +173,10 @@ const initDB = async () => {
              ON CONFLICT (uid) DO NOTHING`
         );
     } catch (err) {
-        console.error("Error initializing DB:", err);
+        console.error("❌ Error initializing DB:", err.message);
+        if (err.code === 'ECONNREFUSED') {
+            console.error("Check if your DATABASE_URL is correct and the DB is reachable.");
+        }
     }
 };
 
@@ -183,6 +186,26 @@ if (process.env.DATABASE_URL) {
 }
 
 // --- API Routes ---
+
+// Health Check
+app.get('/api/health', async (req, res) => {
+    try {
+        const dbCheck = await pool.query('SELECT NOW()');
+        res.json({
+            status: 'ok',
+            database: 'connected',
+            server_time: new Date().toISOString(),
+            db_time: dbCheck.rows[0].now
+        });
+    } catch (err) {
+        console.error("Health check failed:", err);
+        res.status(500).json({
+            status: 'error',
+            database: 'disconnected',
+            error: err.message
+        });
+    }
+});
 
 // OAuth Token Exchange & User Sync
 app.post('/api/token', async (req, res) => {
