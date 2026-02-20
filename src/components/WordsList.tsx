@@ -15,13 +15,13 @@ export const WordsList = ({ words, pangrams }: WordsListProps) => {
       <h3 className="text-xl font-bold text-game-text mb-4">
         Your Words ({words.length})
       </h3>
-      
+
       {words.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">
           No words found yet. Start spelling!
         </p>
       ) : (
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[250px] md:h-[400px] pr-4">
           <div className="space-y-2">
             {sortedWords.map((word, index) => {
               const isPangram = pangrams.includes(word.toLowerCase());

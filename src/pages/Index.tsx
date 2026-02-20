@@ -48,51 +48,48 @@ const Index = () => {
         )}
 
         {/* Welcome Greeting */}
-        <div className="mx-auto max-w-5xl px-4 pt-6 text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+        <div className="mx-auto max-w-5xl px-4 pt-4 md:pt-6 text-center md:text-left">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-1 md:mb-2">
             Welcome back, <span className="text-primary">{user?.displayName || "Player"}</span>!
           </h2>
-          <p className="text-muted-foreground text-sm md:text-base">
+          <p className="text-muted-foreground text-xs md:text-base">
             Ready to challenge your vocabulary today?
           </p>
         </div>
 
-        {/* Suggestions Banner - Reduced padding/height for cleaner look */}
-        <div className="mx-auto max-w-5xl px-4 pt-4">
+        {/* Suggestions Banner - Compact for Mobile */}
+        <div className="mx-auto max-w-5xl px-4 pt-3 md:pt-4">
           <Link to="/suggestions" className="block group">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-orange-500/20 border-2 border-yellow-500/30 hover:border-yellow-400 transition-all duration-300 backdrop-blur-sm">
+            <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-yellow-500/10 via-yellow-400/10 to-orange-500/10 border-2 border-yellow-500/20 hover:border-yellow-400/40 transition-all duration-300 backdrop-blur-sm">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-300/10 to-transparent group-hover:animate-shimmer"></div>
 
-              <div className="relative p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  {/* Icons */}
-                  <div className="flex -space-x-2">
-                    <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center border-2 border-black">
-                      <Lightbulb className="w-6 h-6 text-black" />
+              <div className="relative p-3 md:p-6 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                  {/* Icons - Smaller on Mobile */}
+                  <div className="flex -space-x-1.5 md:-space-x-2">
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-yellow-500 flex items-center justify-center border border-black">
+                      <Lightbulb className="w-4 h-4 md:w-6 md:h-6 text-black" />
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center border-2 border-black">
-                      <Bug className="w-6 h-6 text-white" />
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-red-500 flex items-center justify-center border border-black">
+                      <Bug className="w-4 h-4 md:w-6 md:h-6 text-white" />
                     </div>
                   </div>
 
                   {/* Text Content */}
-                  <div>
-                    <h3 className="text-xl font-bold text-yellow-400 mb-1">
+                  <div className="text-left">
+                    <h3 className="text-base md:text-xl font-bold text-yellow-400 leading-tight">
                       Got Feedback?
                     </h3>
-                    <p className="text-gray-300 text-sm">
-                      Report bugs or share suggestions • <span className="text-yellow-400 font-mono">/suggestions</span>
-                    </p>
-                    <p className="text-gray-400 text-xs mt-1">
-                      💾 Progress saves automatically
+                    <p className="text-gray-400 text-[10px] md:text-xs">
+                      Report bugs • Share suggestions
                     </p>
                   </div>
                 </div>
 
-                {/* CTA Button */}
-                <div className="flex items-center gap-2 px-6 py-3 rounded-lg bg-yellow-500 text-black font-semibold group-hover:bg-yellow-400 transition-colors">
+                {/* CTA Button - Hidden or Small on Mobile */}
+                <div className="flex items-center gap-1.5 px-4 py-2 md:px-6 md:py-3 rounded-lg bg-yellow-500 text-black text-xs md:text-base font-semibold group-hover:bg-yellow-400 transition-colors w-full md:w-auto justify-center">
                   <span>Submit Feedback</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>

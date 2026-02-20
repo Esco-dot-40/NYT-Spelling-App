@@ -69,9 +69,10 @@ All colors MUST be HSL.
     @apply bg-background text-foreground antialiased;
     margin: 0;
     padding: 0;
-    height: 100vh;
-    touch-action: none;
+    min-height: 100vh;
+    touch-action: manipulation;
     overflow-x: hidden;
+    overflow-y: auto;
 
     background:
       radial-gradient(circle at 50% 120%,

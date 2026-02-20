@@ -261,7 +261,7 @@ export const GameBoard = () => {
               {/* Outer hexagons */}
               {outerLetters.map((letter, index) => {
                 const angle = (index * 60 - 90) * (Math.PI / 180);
-                const radius = 75; // Reduced radius for tighter packing
+                const radius = window.innerWidth < 768 ? 60 : 75; // Even tighter for mobile
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
 

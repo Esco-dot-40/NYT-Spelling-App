@@ -45,10 +45,12 @@ const ParticleBackground = () => {
         { ellipseWidth: 350, ellipseHeight: 250, alpha: 0.3, offsetX: -50, offsetY: 0, color: "#54d5e8" },
         { ellipseWidth: 100, ellipseHeight: 80, alpha: 0.2, offsetX: 80, offsetY: -50, color: "#2ae8d8" }
     ]);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
     const particleSettings = useRef([
-        { id: "small", num: 300, fromX: 0, toX: 0, ballwidth: 3, alphamax: 0.4, areaHeight: .5, color: "#0cdbf3", fill: false },
-        { id: "medium", num: 100, fromX: 0, toX: 0, ballwidth: 8, alphamax: 0.3, areaHeight: 1, color: "#6fd2f3", fill: true },
-        { id: "large", num: 10, fromX: 0, toX: 0, ballwidth: 30, alphamax: 0.2, areaHeight: 1, color: "#93e9f3", fill: true }
+        { id: "small", num: isMobile ? 80 : 300, fromX: 0, toX: 0, ballwidth: 3, alphamax: 0.4, areaHeight: .5, color: "#0cdbf3", fill: false },
+        { id: "medium", num: isMobile ? 30 : 100, fromX: 0, toX: 0, ballwidth: 8, alphamax: 0.3, areaHeight: 1, color: "#6fd2f3", fill: true },
+        { id: "large", num: isMobile ? 5 : 10, fromX: 0, toX: 0, ballwidth: 30, alphamax: 0.2, areaHeight: 1, color: "#93e9f3", fill: true }
     ]);
 
     // Utils

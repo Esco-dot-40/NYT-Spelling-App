@@ -12,13 +12,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSound } from "@/contexts/SoundContext";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export const Navigation = () => {
   const { theme, toggleTheme } = useTheme();
   // user auth is now implicit/guest only in this context without backend token exchange
   const { volume, setVolume } = useSound();
   const location = useLocation();
-  const [zoomLevel, setZoomLevel] = useState(0.7);
+  const [zoomLevel, setZoomLevel] = useState(window.innerWidth < 768 ? 0.9 : 1.0);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -46,12 +47,12 @@ export const Navigation = () => {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className={isActive("/") ? "bg-muted" : ""}
+              className={cn("h-8 w-8 md:h-10 md:w-10", isActive("/") ? "bg-muted" : "")}
             >
               <Link to="/" onClick={() => handleLinkClick("/")}>
                 <Home className="h-5 w-5" />
@@ -62,7 +63,7 @@ export const Navigation = () => {
               variant="ghost"
               size="icon"
               asChild
-              className={isActive("/statistics") ? "bg-muted" : ""}
+              className={cn("h-8 w-8 md:h-10 md:w-10", isActive("/statistics") ? "bg-muted" : "")}
             >
               <Link to="/statistics" onClick={() => handleLinkClick("/statistics")}>
                 <BarChart3 className="h-5 w-5" />
@@ -73,7 +74,7 @@ export const Navigation = () => {
               variant="ghost"
               size="icon"
               asChild
-              className={isActive("/history") ? "bg-muted" : ""}
+              className={cn("h-8 w-8 md:h-10 md:w-10", isActive("/history") ? "bg-muted" : "")}
             >
               <Link to="/history" onClick={() => handleLinkClick("/history")}>
                 <History className="h-5 w-5" />
@@ -84,7 +85,7 @@ export const Navigation = () => {
               variant="ghost"
               size="icon"
               asChild
-              className={isActive("/suggestions") ? "bg-muted" : ""}
+              className={cn("h-8 w-8 md:h-10 md:w-10", isActive("/suggestions") ? "bg-muted" : "")}
             >
               <Link to="/suggestions" onClick={() => handleLinkClick("/suggestions")}>
                 <Lightbulb className="h-5 w-5" />
@@ -95,7 +96,7 @@ export const Navigation = () => {
               variant="ghost"
               size="icon"
               asChild
-              className={isActive("/status") ? "bg-muted" : ""}
+              className={cn("h-8 w-8 md:h-10 md:w-10", isActive("/status") ? "bg-muted" : "")}
             >
               <Link to="/status" onClick={() => handleLinkClick("/status")}>
                 <Activity className="h-5 w-5" />
@@ -105,7 +106,7 @@ export const Navigation = () => {
             {/* Zoom Slider Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" title="Adjust Zoom">
+                <Button variant="ghost" size="icon" title="Adjust Zoom" className="h-8 w-8 md:h-10 md:w-10">
                   <ZoomIn className="h-5 w-5" />
                 </Button>
               </PopoverTrigger>
@@ -132,7 +133,7 @@ export const Navigation = () => {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                   {volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
               </PopoverTrigger>
@@ -162,6 +163,7 @@ export const Navigation = () => {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
+              className="h-8 w-8 md:h-10 md:w-10"
             >
               {theme === "light" ? (
                 <Moon className="h-5 w-5" />
