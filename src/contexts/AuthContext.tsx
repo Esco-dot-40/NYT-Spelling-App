@@ -41,17 +41,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const realUser: SimpleUser = {
           uid: discordUser.id,
           email: discordUser.email || null,
-          // Prioritize global_name (Display Name) over username (Handle)
           displayName: discordUser.global_name || discordUser.username || 'Discord User',
-          photoURL: `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+          photoURL: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null
         };
 
-        setUser(realUser);
-
-        // Persist this identity key for local lookups if needed
+        // --- MIGRATION LOGIC ---
         const storageKey = 'alphabee_user_identity';
-        localStorage.setItem(storageKey, JSON.stringify(realUser));
+        const previousIdentityStr = localStorage.getItem(storageKey);
+        if (previousIdentityStr) {
+          const prev = JSON.parse(previousIdentityStr);
+          if (prev.uid && prev.uid.startsWith('guest_') && prev.uid !== realUser.uid) {
+            console.log("Migrating Guest data to Discord identity...", prev.uid, "->", realUser.uid);
 
+            // Migrate local game entries
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (key.includes(prev.uid))) {
+                const newKey = key.replace(prev.uid, realUser.uid);
+                const data = localStorage.getItem(key);
+                if (data) {
+                  localStorage.setItem(newKey, data);
+                  // Optionally sync to API
+                  try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.puzzleId) {
+                      fetch('/api/progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...parsed, uid: realUser.uid })
+                      });
+                    }
+                  } catch (e) { }
+                }
+              }
+            }
+          }
+        }
+
+        setUser(realUser);
+        localStorage.setItem(storageKey, JSON.stringify(realUser));
         finishLoading(realUser);
         return;
       }

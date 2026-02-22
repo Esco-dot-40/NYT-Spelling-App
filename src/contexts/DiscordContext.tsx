@@ -9,6 +9,7 @@ interface DiscordContextType {
     isLoading: boolean;
     error: string | null;
     authError: string | null;
+    loginWithDiscord: () => void;
 }
 
 const DiscordContext = createContext<DiscordContextType>({
@@ -17,6 +18,7 @@ const DiscordContext = createContext<DiscordContextType>({
     isLoading: true,
     error: null,
     authError: null,
+    loginWithDiscord: () => { },
 });
 
 export const useDiscord = () => useContext(DiscordContext);
@@ -28,106 +30,108 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [error, setError] = useState<string | null>(null);
     const [authError, setAuthError] = useState<string | null>(null);
 
+    const loginWithDiscord = () => {
+        const redirectUri = window.location.origin;
+        const scopes = encodeURIComponent("identify guilds");
+        const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scopes}`;
+        window.location.href = url;
+    };
+
     // Primary Setup Effect
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
 
         const setupDiscord = async () => {
             try {
-                // Check if in Discord iframe - strict check
-                // We rely on frame_id being present in the URL for real Discord environment
-                const isDiscord = window.location.search.includes('frame_id');
+                const urlParams = new URLSearchParams(window.location.search);
+                const isDiscord = urlParams.has('frame_id');
+                const codeFromUrl = urlParams.get('code');
 
                 let sdk: DiscordSDK | DiscordSDKMock;
 
                 if (isDiscord) {
                     sdk = new DiscordSDK(DISCORD_CLIENT_ID);
-                    // Explicitly do NOT set mock data here.
-                    // We must wait for sdk.ready() and the token exchange.
                 } else {
-                    console.log("Running in browser mode, mocking Discord SDK.");
-                    const mock = new DiscordSDKMock(DISCORD_CLIENT_ID, "12345", "mock_discriminator");
+                    console.log("Running in browser mode.");
+                    const mock = new DiscordSDKMock(DISCORD_CLIENT_ID, "12345", "mock_discriminator", "Mock Guild");
                     setDiscordSdk(mock);
 
-                    // MOCK AUTH for browser testing so we don't see "Guest"
-                    setAuth({
-                        user: {
-                            id: "mock_user_123",
-                            username: "Browser Dev",
-                            discriminator: "0000",
-                            global_name: "Browser Developer"
-                        },
-                        access_token: "mock_token"
-                    });
+                    // Check if we just returned from an OAuth redirect
+                    if (codeFromUrl) {
+                        try {
+                            setAuthError("Exchanging Web OAuth Token...");
+                            const response = await fetch('/api/token', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    code: codeFromUrl,
+                                    redirect_uri: window.location.origin
+                                }),
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                setAuth(data);
+                                // Clean up URL
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                            } else {
+                                const errData = await response.json();
+                                setAuthError(`Web Auth Failed: ${errData.error || response.statusText}`);
+                            }
+                        } catch (e: any) {
+                            setAuthError(`Web Auth Error: ${e.message}`);
+                        }
+                    }
 
                     setIsLoading(false);
                     return;
                 }
 
-                // Create a promise that rejects after 5s, but we can clear the timeout
+                // ... (rest of the Discord Iframe logic remains similar but updated for redirect_uri)
                 const timeoutPromise = new Promise((_, reject) => {
                     timeoutId = setTimeout(() => {
                         reject(new Error("Connection timeout"));
                     }, 5000);
                 });
 
-                // Race against timeout
                 await Promise.race([
                     (async () => {
                         try {
                             setAuthError("Waiting for SDK Ready...");
                             await sdk.ready();
-                            console.log("Discord SDK Ready");
                             setAuthError("SDK Ready. Authorizing...");
 
-                            // Authorize
                             const { code } = await sdk.commands.authorize({
                                 client_id: DISCORD_CLIENT_ID,
                                 response_type: "code",
                                 state: "",
                                 prompt: "none",
-                                scope: [
-                                    "identify",
-                                    "guilds",
-                                ],
+                                scope: ["identify", "guilds"],
                             });
 
                             setAuthError("Authorized. Exchanging Token...");
-                            console.log("Got auth code", code);
 
-                            // Exchange code for token and user info via our backend
                             const response = await fetch('/api/token', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ code }),
+                                body: JSON.stringify({
+                                    code,
+                                    redirect_uri: window.location.origin
+                                }),
                             });
 
                             if (!response.ok) {
-                                let errorMessage = "Unknown Auth Error";
-                                try {
-                                    const errorData = await response.json();
-                                    errorMessage = errorData.error || errorMessage;
-                                    if (errorData.details?.error_description) {
-                                        errorMessage += `: ${errorData.details.error_description}`;
-                                    }
-                                } catch (e) {
-                                    errorMessage += " (Non-JSON response)";
-                                }
-                                // THROW so we hit the catch block and setAuthError properly
-                                throw new Error(errorMessage);
+                                throw new Error("Backend Token Exchange Failed");
                             }
 
                             const data = await response.json();
-                            setAuth({ ...data, code });
-                            setAuthError(null); // Success! Clear errors.
-
+                            setAuth(data);
+                            setAuthError(null);
                             setDiscordSdk(sdk);
-                            console.log("Discord Authenticated", data.user?.username);
 
                         } catch (e: any) {
                             console.error("Auth Step Failed:", e);
                             setAuthError(`Auth Failed: ${e.message || e}`);
-                            // Do NOT set partial auth. Fail hard so the user sees the error.
                         }
                     })(),
                     timeoutPromise
@@ -139,32 +143,27 @@ export const DiscordProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     setError("Discord Connection Failed: " + (err.message || "Unknown error"));
                 }
             } finally {
-                clearTimeout(timeoutId); // Critical: Clear timeout so it doesn't reject later
+                clearTimeout(timeoutId);
                 setIsLoading(false);
             }
         };
 
         setupDiscord();
-
         return () => clearTimeout(timeoutId);
     }, []);
 
-    // Safety Valve: Force loading to finish after 6 seconds max
+    // Safety Valve
     useEffect(() => {
         const timer = setTimeout(() => {
             if (isLoading) {
-                console.warn("Discord Context: Force finishing loading state due to timeout.");
                 setIsLoading(false);
-                if (!discordSdk) {
-                    setError(prev => prev || "Connection timed out - loaded in offline mode");
-                }
             }
-        }, 6000);
+        }, 8000);
         return () => clearTimeout(timer);
-    }, [isLoading, discordSdk]);
+    }, [isLoading]);
 
     return (
-        <DiscordContext.Provider value={{ discordSdk, auth, isLoading, error, authError }}>
+        <DiscordContext.Provider value={{ discordSdk, auth, isLoading, error, authError, loginWithDiscord }}>
             {children}
         </DiscordContext.Provider>
     );

@@ -314,7 +314,8 @@ app.post('/api/token', async (req, res) => {
 app.get('/api/leaderboard', async (req, res) => {
     const { guild_id } = req.query;
     try {
-        let query = `
+        // Query for leaders (no limit as requested, or a very high one)
+        let leaderQuery = `
             SELECT u.display_name, s.games_played, s.current_streak, s.best_streak 
             FROM stats s 
             JOIN users u ON s.user_uid = u.uid 
@@ -322,14 +323,31 @@ app.get('/api/leaderboard', async (req, res) => {
 
         const params = [];
         if (guild_id) {
-            query += ` WHERE s.guild_id = $1 `;
+            leaderQuery += ` WHERE s.guild_id = $1 `;
             params.push(guild_id);
         }
 
-        query += ` ORDER BY s.games_played DESC LIMIT 50`;
+        leaderQuery += ` ORDER BY s.games_played DESC`; // Removed LIMIT 50
 
-        const result = await pool.query(query, params);
-        res.json(result.rows);
+        const leadersResult = await pool.query(leaderQuery, params);
+
+        // Query for additional stats
+        const totalPlayersRes = await pool.query('SELECT COUNT(*) FROM stats');
+        const returningPlayersRes = await pool.query('SELECT COUNT(*) FROM stats WHERE games_played > 1');
+        const avgStreakRes = await pool.query('SELECT AVG(current_streak) FROM stats WHERE current_streak > 0');
+        const bestStreakRes = await pool.query('SELECT MAX(best_streak) FROM stats');
+        const mostCommonRankRes = await pool.query('SELECT best_rank, COUNT(*) as count FROM stats GROUP BY best_rank ORDER BY count DESC LIMIT 1');
+
+        res.json({
+            leaders: leadersResult.rows,
+            stats: {
+                total_players: parseInt(totalPlayersRes.rows[0].count),
+                returning_players: parseInt(returningPlayersRes.rows[0].count),
+                avg_streak: Math.round((parseFloat(avgStreakRes.rows[0].avg) || 0) * 10) / 10,
+                best_overall_streak: parseInt(bestStreakRes.rows[0].max || 0),
+                most_common_rank: mostCommonRankRes.rows[0]?.best_rank || 'None'
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'DB Error' });
