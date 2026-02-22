@@ -316,7 +316,7 @@ app.get('/api/leaderboard', async (req, res) => {
     try {
         // Query for leaders (no limit as requested, or a very high one)
         let leaderQuery = `
-            SELECT u.display_name, s.games_played, s.current_streak, s.best_streak 
+            SELECT u.uid, u.display_name, s.games_played, s.current_streak, s.best_streak, s.best_rank, s.last_played_date 
             FROM stats s 
             JOIN users u ON s.user_uid = u.uid 
         `;
@@ -699,6 +699,32 @@ app.get('/api/analytics/summary', async (req, res) => {
             recent_visits: recentRes.rows,
             geo_data: geoRes.rows
         });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'DB Error' });
+    }
+});
+
+// Admin: Full Player Data
+app.get('/api/analytics/players', async (req, res) => {
+    try {
+        const playersRes = await pool.query(`
+            SELECT 
+                u.uid,
+                u.display_name,
+                u.avatar_url,
+                u.created_at,
+                s.games_played,
+                s.current_streak,
+                s.best_streak,
+                s.best_rank,
+                s.last_played_date,
+                s.guild_id
+            FROM users u
+            LEFT JOIN stats s ON u.uid = s.user_uid
+            ORDER BY s.games_played DESC NULLS LAST
+        `);
+        res.json({ players: playersRes.rows });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'DB Error' });

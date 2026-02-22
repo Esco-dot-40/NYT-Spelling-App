@@ -49,6 +49,8 @@ const COLORS = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'
 const Analytics = () => {
     const [password, setPassword] = useState('');
     const [authenticated, setAuthenticated] = useState(false);
+    const [players, setPlayers] = useState<any[]>([]);
+    const [playersLoading, setPlayersLoading] = useState(false);
 
     // Simple client-side auth for now as requested
     const handleLogin = (e: React.FormEvent) => {
@@ -299,9 +301,18 @@ const Analytics = () => {
             </div>
 
             {/* Tabbed Analytics */}
-            <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 p-1 bg-muted/50 rounded-lg">
+            <Tabs defaultValue="overview" className="w-full" onValueChange={(v) => {
+                if (v === 'players' && players.length === 0 && !playersLoading) {
+                    setPlayersLoading(true);
+                    fetch('/api/analytics/players').then(r => r.json()).then(d => {
+                        setPlayers(d.players || []);
+                        setPlayersLoading(false);
+                    }).catch(() => setPlayersLoading(false));
+                }
+            }}>
+                <TabsList className="grid w-full grid-cols-6 p-1 bg-muted/50 rounded-lg">
                     <TabsTrigger value="overview">🌍 Overview</TabsTrigger>
+                    <TabsTrigger value="players">👥 Players</TabsTrigger>
                     <TabsTrigger value="devices">💻 Devices</TabsTrigger>
                     <TabsTrigger value="network">📡 Network</TabsTrigger>
                     <TabsTrigger value="traffic">🔗 Traffic</TabsTrigger>
@@ -599,6 +610,83 @@ const Analytics = () => {
                                     <div className="text-center py-20 text-muted-foreground">No recent activity logs found.</div>
                                 )}
                             </ScrollArea>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* PLAYERS TAB */}
+                <TabsContent value="players" className="space-y-4 mt-6">
+                    <Card className="border-primary/10">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <Users className="h-5 w-5" />
+                                All Registered Players
+                            </CardTitle>
+                            <CardDescription>{players.length} total players • Full database view</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {playersLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <ScrollArea className="h-[600px] rounded-md border border-border/50">
+                                    <Table>
+                                        <TableHeader className="bg-muted/50 sticky top-0">
+                                            <TableRow>
+                                                <TableHead className="w-[60px]">#</TableHead>
+                                                <TableHead>Display Name</TableHead>
+                                                <TableHead>UID</TableHead>
+                                                <TableHead className="text-center">Games</TableHead>
+                                                <TableHead className="text-center">Streak</TableHead>
+                                                <TableHead className="text-center">Best Streak</TableHead>
+                                                <TableHead className="text-center">Best Rank</TableHead>
+                                                <TableHead>Guild ID</TableHead>
+                                                <TableHead>Last Played</TableHead>
+                                                <TableHead>Joined</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {players.map((p, idx) => (
+                                                <TableRow key={p.uid || idx} className="hover:bg-secondary/40 transition-colors border-b border-border/10">
+                                                    <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            {p.avatar_url && <img src={p.avatar_url} className="w-6 h-6 rounded-full" alt="" />}
+                                                            <span className="font-medium">{p.display_name || 'Unknown'}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-[10px] text-muted-foreground max-w-[150px] truncate">{p.uid}</TableCell>
+                                                    <TableCell className="text-center font-bold">{p.games_played ?? 0}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <span className={p.current_streak > 0 ? 'text-orange-500 font-bold' : 'text-muted-foreground'}>
+                                                            {p.current_streak ?? 0}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-muted-foreground">{p.best_streak ?? 0}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        {p.best_rank ? (
+                                                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                                                {p.best_rank}
+                                                            </span>
+                                                        ) : <span className="text-muted-foreground">—</span>}
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-[10px] text-muted-foreground max-w-[120px] truncate">{p.guild_id || '—'}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        {p.last_played_date ? new Date(p.last_played_date).toLocaleDateString() : '—'}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                    {players.length === 0 && (
+                                        <div className="text-center py-20 text-muted-foreground">No players found in the database.</div>
+                                    )}
+                                </ScrollArea>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
